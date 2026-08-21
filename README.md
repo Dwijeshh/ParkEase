@@ -613,4 +613,4 @@ ParkEase is currently being developed as an academic working prototype using a d
 
 This project is currently developed as an academic prototype.
 
-Add an appropriate open-source license here if the project is released publicly.
+
