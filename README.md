@@ -20,7 +20,7 @@ Computer vision provides an additional layer for detecting vehicles and verifyin
 
 ## Core Workflow
 
-
+```text
 Customer
    |
    v
@@ -53,58 +53,73 @@ Backend Server
    |
    v
 Parking State Updated
-
+```
 
 ---
 
 ## System Architecture
 
-The prototype follows a simple layered architecture. The customer application communicates with the backend, while the backend manages the database, allocation, routing, and computer-vision events.
+ParkEase follows a simple layered architecture. The customer application communicates with the backend, while the backend manages parking allocation, routing, database operations, and computer-vision events.
 
+```mermaid
+flowchart TB
 
-+-------------------------+
-|      USER LAYER         |
-|                         |
-|   Customer Flutter App  |
-+------------+------------+
-             |
-             | REST API
-             v
-+-------------------------+
-|    APPLICATION LAYER    |
-|                         |
-|   Node.js / Express     |
-|                         |
-|  +-------------------+  |
-|  | Parking Allocation|  |
-|  | Routing Engine    |  |
-|  +-------------------+  |
-+------------+------------+
-             |
-             | SQL
-             v
-+-------------------------+
-|       DATA LAYER        |
-|                         |
-|       PostgreSQL        |
-|                         |
-| Users / Vehicles        |
-| Parking Slots           |
-| Facility Graph          |
-| Parking Sessions        |
-+------------^------------+
-             |
-             | Occupancy Events
-             |
-+------------+------------+
-| AI / COMPUTER VISION    |
-|                         |
-| Camera -> YOLO/OpenCV   |
-| -> Vehicle/Occupancy    |
-+-------------------------+
+    subgraph USER["USER LAYER"]
+        APP["Customer Flutter App"]
+    end
 
+    subgraph APPLICATION["APPLICATION LAYER"]
+        SERVER["Node.js / Express"]
+        ALLOCATION["Parking Allocation Engine"]
+        ROUTING["Routing Engine"]
+    end
 
-> **Note:** The architecture diagram intentionally uses plain-text ASCII rather than complex Mermaid diagrams so that it remains readable in GitHub's repository view and in basic Markdown renderers.
+    subgraph DATA["DATA LAYER"]
+        DB[("PostgreSQL")]
+    end
+
+    subgraph CV["AI / COMPUTER VISION"]
+        CAMERA["Camera"]
+        VISION["YOLO / OpenCV"]
+        DETECTION["Vehicle / Occupancy Detection"]
+    end
+
+    APP -->|REST API| SERVER
+
+    SERVER --> ALLOCATION
+    SERVER --> ROUTING
+    SERVER -->|SQL| DB
+
+    CAMERA --> VISION
+    VISION --> DETECTION
+    DETECTION -->|Occupancy Events| SERVER
+
+    ALLOCATION --> DB
+    ROUTING --> DB
+```
+
+### Architecture Flow
+
+```text
+Customer App
+      |
+      | REST API
+      v
+Node.js / Express
+      |
+      +------> Parking Allocation Engine
+      |
+      +------> Routing Engine
+      |
+      +------> PostgreSQL
+      |
+      ^
+      |
+Computer Vision
+      ^
+      |
+    Camera
+```
 
 ---
 
@@ -127,7 +142,7 @@ It handles:
 
 ### 2. Backend Server
 
-The backend acts as the central communication layer between the application, database, parking logic, and computer-vision system.
+The backend acts as the central communication and decision-making layer between the customer application, database, parking logic, and computer-vision system.
 
 It handles:
 
@@ -151,21 +166,38 @@ The allocation engine selects a suitable parking slot using:
 
 The prototype uses deterministic logic rather than machine learning for parking allocation.
 
+For example:
+
+```text
+Entry
+  +
+Destination
+  +
+Available Slots
+  +
+Distance
+  |
+  v
+Best Suitable Slot
+```
+
 ### 4. Route Engine
 
 The parking facility is represented as a weighted graph.
 
+```text
+Node   -> Gate / Junction / Entrance / Parking Slot
 
-Node  -> Gate / Junction / Entrance / Parking Slot
-Edge  -> Road or connection between nodes
+Edge   -> Road or connection between nodes
+
 Weight -> Distance between connected nodes
-
+```
 
 Dijkstra's algorithm or A* can be used to calculate a suitable route from the entry gate to the allocated parking slot.
 
 Example:
 
-
+```text
 ENTRY
   |
   v
@@ -179,7 +211,7 @@ J5
   |
   v
 C17
-
+```
 
 The resulting route is sent to the Flutter application and displayed over the parking floor plan.
 
@@ -187,7 +219,7 @@ The resulting route is sent to the Flutter application and displayed over the pa
 
 PostgreSQL maintains the digital state of each parking slot.
 
-
+```text
 AVAILABLE
     |
     v
@@ -198,7 +230,7 @@ OCCUPIED
     |
     v
 AVAILABLE
-
+```
 
 The parking state changes throughout the customer's parking session.
 
@@ -208,7 +240,7 @@ Computer vision provides an additional physical occupancy-monitoring layer.
 
 The prototype can use camera/webcam input with YOLO and OpenCV to detect vehicles in defined parking regions.
 
-
+```text
 Camera
    |
    v
@@ -225,7 +257,7 @@ Backend
    |
    v
 Parking State
-
+```
 
 License-plate recognition (ANPR/OCR) can be added as an extension.
 
@@ -237,7 +269,7 @@ ParkEase uses a single PostgreSQL database for both user information and parking
 
 ### Main Tables
 
-
+```text
 users
 vehicles
 
@@ -250,35 +282,35 @@ parking_sessions
 
 occupancy_events
 vehicle_detections
-
+```
 
 ### Users
 
 Stores customer account information.
 
-
+```text
 id
 name
 email
 password
-
+```
 
 ### Vehicles
 
 Stores vehicles associated with customers.
 
-
+```text
 id
 user_id
 registration_number
 vehicle_type
-
+```
 
 ### Parking Slots
 
 Stores the location and current state of parking spaces.
 
-
+```text
 id
 slot_number
 zone
@@ -286,30 +318,97 @@ node_id
 x
 y
 status
-
+```
 
 Example:
 
-
+```text
 C17
 Zone: C
 Status: AVAILABLE
 Node: 42
-
+```
 
 ### Facility Graph
 
-`facility_nodes` stores important locations such as gates, junctions, entrances, and parking slots.
+`facility_nodes` stores important locations such as:
 
-`facility_edges` stores connections between nodes and their distances.
+- Entry
+- Exit
+- Junctions
+- Building entrances
+- Parking slots
+
+`facility_edges` stores connections between nodes and their corresponding distances.
 
 This allows the fixed parking floor plan to be converted into a digital routing graph.
 
 ---
 
+## Indoor Navigation
+
+ParkEase does not require an external road-navigation service for the prototype.
+
+The parking floor plan itself acts as the navigation map.
+
+The process is:
+
+```text
+Parking Floor Plan
+        |
+        v
+Nodes + Edges
+        |
+        v
+Facility Graph
+        |
+        v
+Parking Allocation
+        |
+        v
+Route Calculation
+        |
+        v
+Route Coordinates
+        |
+        v
+Flutter Map
+```
+
+The customer's application displays the floor plan and overlays the calculated route from the entry point to the assigned parking slot.
+
+Example:
+
+```text
+             BUILDING
+    +--------------------------+
+    | Entrance 1               |
+    | Entrance 2               |
+    | Entrance 3               |
+    | Entrance 4               |
+    | Entrance 5               |
+    +--------------------------+
+
+                 ^
+                 |
+               ENTRY
+                 |
+                 |
+                J1
+                 |
+                J2
+                 |
+                J5
+                 |
+                C17
+                 *
+```
+
+---
+
 ## Prototype Flow
 
-
+```text
 1. User Registration
         |
         v
@@ -338,7 +437,73 @@ This allows the fixed parking floor plan to be converted into a digital routing 
         |
         v
 10. Parking Exit
+```
 
+---
+
+## Example Parking Session
+
+A typical prototype session can work as follows:
+
+```text
+User
+ |
+ | Registers vehicle
+ v
+Customer App
+ |
+ | Selects destination
+ v
+Backend
+ |
+ | Requests available slots
+ v
+Allocation Engine
+ |
+ | Assigns C17
+ v
+Routing Engine
+ |
+ | Calculates route
+ v
+Customer App
+ |
+ | Displays route
+ v
+Parking Slot C17
+ |
+ | Vehicle detected
+ v
+Computer Vision
+ |
+ | Sends occupancy event
+ v
+Backend
+ |
+ | Updates parking state
+ v
+PostgreSQL
+ |
+ | C17 = OCCUPIED
+```
+
+When the vehicle leaves:
+
+```text
+Vehicle Leaves C17
+       |
+       v
+Computer Vision
+       |
+       v
+Backend
+       |
+       v
+PostgreSQL
+       |
+       v
+C17 = AVAILABLE
+```
 
 ---
 
@@ -359,34 +524,39 @@ This allows the fixed parking floor plan to be converted into a digital routing 
 
 ## Project Structure
 
-The repository is organized by major system components:
+The repository is organized according to the major components of ParkEase.
 
-
+```text
 ParkEase/
 |
 +-- mobile/
+|   |
 |   +-- customer-app/
 |
 +-- backend/
+|   |
 |   +-- server/
 |   +-- allocation/
 |   +-- routing/
 |
 +-- database/
+|   |
 |   +-- schema/
 |   +-- seed/
 |
 +-- computer-vision/
+|   |
 |   +-- detection/
 |   +-- occupancy/
 |
 +-- docs/
+|   |
 |   +-- architecture/
 |   +-- floor-plan/
 |
 +-- README.md
 +-- .gitignore
-
+```
 
 The exact folder structure may evolve during development.
 
@@ -406,9 +576,9 @@ The primary demonstration covers:
 - Route generation
 - Navigation to the assigned slot
 - Parking-state management
-- Basic vehicle/occupancy detection
+- Basic vehicle and occupancy detection
 
-Physical barriers, cloud deployment, advanced payments, and large-scale infrastructure are outside the initial prototype scope.
+Physical barriers, cloud deployment, advanced payment systems, and large-scale infrastructure are outside the initial prototype scope.
 
 ---
 
@@ -426,12 +596,14 @@ Potential future improvements include:
 - Real-time route updates
 - Cloud deployment
 - Parking analytics
+- Reservation management
+- Dynamic pricing
 
 ---
 
 ## Project Status
 
-**Prototype - In Development**
+**Prototype — In Development**
 
 ParkEase is currently being developed as an academic working prototype using a digitally modeled single-floor commercial parking facility.
 
@@ -441,4 +613,4 @@ ParkEase is currently being developed as an academic working prototype using a d
 
 This project is currently developed as an academic prototype.
 
-
+Add an appropriate open-source license here if the project is released publicly.
