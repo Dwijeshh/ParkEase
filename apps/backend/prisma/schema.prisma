@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  SECURITY
+  ADMIN
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+}
+
+enum SlotStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum AlertType {
+  RESERVED_SLOT_CONFLICT
+  WRONG_VEHICLE_TYPE
+  UNKNOWN_OCCUPANCY
+  NO_COMPATIBLE_SLOT
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AlertStatus {
+  NEW
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles     Vehicle[]
+  reservations Reservation[]
+  alerts       ParkingAlert[] @relation("AlertUser")
+}
+
+model Vehicle {
+  id                 String      @id @default(cuid())
+  registrationNumber String      @unique
+  type               VehicleType
+  userId             String
+  createdAt          DateTime    @default(now())
+
+  user         User             @relation(fields: [userId], references: [id])
+  reservations Reservation[]
+  sessions     ParkingSession[]
+  alerts       ParkingAlert[]   @relation("AlertVehicle")
+}
+
+model Facility {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+
+  slots ParkingSlot[]
+}
+
+model ParkingSlot {
+  id          String      @id @default(cuid())
+  code        String
+  vehicleType VehicleType
+  status      SlotStatus  @default(AVAILABLE)
+  facilityId  String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  facility     Facility         @relation(fields: [facilityId], references: [id])
+  reservations Reservation[]
+  sessions     ParkingSession[]
+  alerts       ParkingAlert[]   @relation("AlertSlot")
+
+  @@unique([facilityId, code])
+}
+
+model Reservation {
+  id        String            @id @default(cuid())
+  userId    String
+  vehicleId String
+  slotId    String
+  status    ReservationStatus @default(ACTIVE)
+  startsAt  DateTime          @default(now())
+  expiresAt DateTime?
+  createdAt DateTime          @default(now())
+
+  user    User            @relation(fields: [userId], references: [id])
+  vehicle Vehicle         @relation(fields: [vehicleId], references: [id])
+  slot    ParkingSlot     @relation(fields: [slotId], references: [id])
+  session ParkingSession?
+  alerts  ParkingAlert[]  @relation("AlertReservation")
+}
+
+model ParkingSession {
+  id            String        @id @default(cuid())
+  vehicleId     String
+  slotId        String
+  reservationId String        @unique
+  status        SessionStatus @default(ACTIVE)
+  startedAt     DateTime      @default(now())
+  endedAt       DateTime?
+
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
+  slot        ParkingSlot @relation(fields: [slotId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+}
+
+model ParkingAlert {
+  id       String        @id @default(cuid())
+  type     AlertType
+  severity AlertSeverity
+  status   AlertStatus   @default(NEW)
+  message  String
+
+  expectedVehicleType VehicleType?
+  detectedVehicleType VehicleType?
+
+  userId        String?
+  vehicleId     String?
+  slotId        String?
+  reservationId String?
+
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolvedBy     String?
+  resolvedAt     DateTime?
+  resolutionNote String?
+
+  evidenceImageUrl String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user        User?        @relation("AlertUser", fields: [userId], references: [id])
+  vehicle     Vehicle?     @relation("AlertVehicle", fields: [vehicleId], references: [id])
+  slot        ParkingSlot? @relation("AlertSlot", fields: [slotId], references: [id])
+  reservation Reservation? @relation("AlertReservation", fields: [reservationId], references: [id])
+
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+}
