@@ -1,0 +1,44 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# Next.js
+.next/
+out/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs
+*.log
+
+# IDE files
+.vscode/
+.idea/
+
+# Operating-system files
+.DS_Store
+
+# Local data
+backups/
+downloads/
+uploads/
+
+# Machine-learning models
+*.pt
