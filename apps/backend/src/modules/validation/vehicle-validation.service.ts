@@ -1,7 +1,6 @@
 import {
   AlertSeverity,
   AlertType,
-  Prisma,
   ReservationStatus,
   SlotStatus,
   VehicleType
@@ -14,26 +13,30 @@ type ValidateVehicleInput = {
   detectedVehicleId?: string;
 };
 
+const safeUser = {
+  select: {
+    id: true,
+    name: true,
+    email: true,
+    role: true,
+    createdAt: true,
+    updatedAt: true
+  }
+};
+
 export async function validateVehicleAtReservedSlot(
   input: ValidateVehicleInput
 ) {
   return prisma.$transaction(async (tx) => {
     const reservation = await tx.reservation.findUnique({
-      where: { id: input.reservationId },
-     include: {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true
-    }
-  },
-  vehicle: true,
-  slot: true
-}
+      where: {
+        id: input.reservationId
+      },
+      include: {
+        user: safeUser,
+        vehicle: true,
+        slot: true
+      }
     });
 
     if (!reservation || reservation.status !== ReservationStatus.ACTIVE) {
@@ -87,20 +90,6 @@ export async function validateVehicleAtReservedSlot(
       };
     }
 
-    const updatedReservation = await tx.reservation.update({
-      where: {
-        id: reservation.id
-      },
-      data: {
-        slotId: replacementSlot.id
-      },
-      include: {
-        user: true,
-        vehicle: true,
-        slot: true
-      }
-    });
-
     await tx.parkingSlot.update({
       where: {
         id: reservation.slotId
@@ -110,7 +99,7 @@ export async function validateVehicleAtReservedSlot(
       }
     });
 
-    await tx.parkingSlot.update({
+    const updatedReplacementSlot = await tx.parkingSlot.update({
       where: {
         id: replacementSlot.id
       },
@@ -119,10 +108,24 @@ export async function validateVehicleAtReservedSlot(
       }
     });
 
+    const updatedReservation = await tx.reservation.update({
+      where: {
+        id: reservation.id
+      },
+      data: {
+        slotId: replacementSlot.id
+      },
+      include: {
+        user: safeUser,
+        vehicle: true,
+        slot: true
+      }
+    });
+
     return {
       action: "REASSIGNED" as const,
       reservation: updatedReservation,
-      replacementSlot,
+      replacementSlot: updatedReplacementSlot,
       alert: null
     };
   });
