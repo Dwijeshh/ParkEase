@@ -50,7 +50,9 @@ class _ParkingScreenState extends State<ParkingScreen> {
               color: Color(0xFF111827),
             ),
           ),
+
           const SizedBox(height: 5),
+
           const Text(
             'Monitor and manage parking slots across the facility.',
             style: TextStyle(
@@ -111,32 +113,30 @@ class _ParkingScreenState extends State<ParkingScreen> {
                         fontSize: 16,
                       ),
                     ),
+
                     const Spacer(),
-                    ...['All', 'Available', 'Occupied', 'Reserved']
-                        .map(
-                          (filter) => Padding(
-                            padding:
-                                const EdgeInsets.only(left: 7),
-                            child: ChoiceChip(
-                              label: Text(filter),
-                              selected:
-                                  selectedFilter == filter,
-                              onSelected: (_) {
-                                setState(() {
-                                  selectedFilter = filter;
-                                });
-                              },
-                              selectedColor:
-                                  const Color(0xFFDCFCE7),
-                              labelStyle: TextStyle(
-                                color: selectedFilter == filter
-                                    ? const Color(0xFF15803D)
-                                    : const Color(0xFF6B7280),
-                                fontSize: 11,
-                              ),
-                            ),
+
+                    ...['All', 'Available', 'Occupied', 'Reserved'].map(
+                      (filter) => Padding(
+                        padding: const EdgeInsets.only(left: 7),
+                        child: ChoiceChip(
+                          label: Text(filter),
+                          selected: selectedFilter == filter,
+                          onSelected: (_) {
+                            setState(() {
+                              selectedFilter = filter;
+                            });
+                          },
+                          selectedColor: const Color(0xFFDCFCE7),
+                          labelStyle: TextStyle(
+                            color: selectedFilter == filter
+                                ? const Color(0xFF15803D)
+                                : const Color(0xFF6B7280),
+                            fontSize: 11,
                           ),
                         ),
+                      ),
+                    ),
                   ],
                 ),
 
@@ -155,6 +155,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
                   itemCount: filteredSlots.length,
                   itemBuilder: (context, index) {
                     final slot = filteredSlots[index];
+
                     return _slotCard(slot);
                   },
                 ),
@@ -188,7 +189,9 @@ class _ParkingScreenState extends State<ParkingScreen> {
               color: const Color(0xFF16A34A),
               size: 23,
             ),
+
             const SizedBox(width: 12),
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -199,6 +202,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+
                 Text(
                   title,
                   style: const TextStyle(
@@ -223,10 +227,12 @@ class _ParkingScreenState extends State<ParkingScreen> {
         background = const Color(0xFFFFF7ED);
         iconColor = const Color(0xFFF97316);
         break;
+
       case 'Reserved':
         background = const Color(0xFFF5F3FF);
         iconColor = const Color(0xFF7C3AED);
         break;
+
       default:
         background = const Color(0xFFF0FDF4);
         iconColor = const Color(0xFF16A34A);
@@ -241,7 +247,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
           color: background,
           borderRadius: BorderRadius.circular(11),
           border: Border.all(
-            color: iconColor.withOpacity(0.15),
+            color: iconColor.withValues(alpha: 0.15),
           ),
         ),
         child: Column(
@@ -254,7 +260,9 @@ class _ParkingScreenState extends State<ParkingScreen> {
                   color: iconColor,
                   size: 20,
                 ),
+
                 const Spacer(),
+
                 Container(
                   width: 7,
                   height: 7,
@@ -265,7 +273,9 @@ class _ParkingScreenState extends State<ParkingScreen> {
                 ),
               ],
             ),
+
             const Spacer(),
+
             Text(
               slot['id'],
               style: const TextStyle(
@@ -273,7 +283,9 @@ class _ParkingScreenState extends State<ParkingScreen> {
                 fontSize: 14,
               ),
             ),
+
             const SizedBox(height: 3),
+
             Text(
               slot['status'],
               style: TextStyle(

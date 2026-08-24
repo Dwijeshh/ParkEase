@@ -1,24 +1,73 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 class ApiService {
-  // Base URL for the ParkEase backend
   static const String baseUrl = 'http://localhost:3000';
 
-  // GET request
-  Future<void> get(String endpoint) async {
-    // Backend connection will be added here
+  Future<dynamic> get(String endpoint) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    return _handleResponse(response);
   }
 
-  // POST request
-  Future<void> post(String endpoint, Map<String, dynamic> data) async {
-    // Backend connection will be added here
+  Future<dynamic> post(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+
+    return _handleResponse(response);
   }
 
-  // PUT request
-  Future<void> put(String endpoint, Map<String, dynamic> data) async {
-    // Backend connection will be added here
+  Future<dynamic> put(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+
+    return _handleResponse(response);
   }
 
-  // DELETE request
-  Future<void> delete(String endpoint) async {
-    // Backend connection will be added here
+  Future<dynamic> delete(String endpoint) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    return _handleResponse(response);
+  }
+
+  dynamic _handleResponse(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
+
+      return jsonDecode(response.body);
+    }
+
+    throw Exception(
+      'API Error: ${response.statusCode} - ${response.body}',
+    );
   }
 }

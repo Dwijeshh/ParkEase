@@ -15,7 +15,8 @@ class ParkEaseApp extends StatelessWidget {
       title: 'ParkEase Admin',
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF6F7F9),
+        fontFamily: 'Arial',
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       ),
       home: const DashboardScreen(),
     );

@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 
-class UsersScreen extends StatelessWidget {
+class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
 
-  final List<Map<String, String>> users = const [
+  @override
+  State<UsersScreen> createState() => _UsersScreenState();
+}
+
+class _UsersScreenState extends State<UsersScreen> {
+  String searchQuery = '';
+
+  final List<Map<String, String>> users = [
     {
       'name': 'Rahul Shetty',
       'email': 'rahul@example.com',
@@ -38,11 +45,20 @@ class UsersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final filteredUsers = users.where((user) {
+      final query = searchQuery.toLowerCase();
+
+      return user['name']!.toLowerCase().contains(query) ||
+          user['email']!.toLowerCase().contains(query) ||
+          user['phone']!.toLowerCase().contains(query);
+    }).toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ================= HEADER =================
           Row(
             children: [
               const Column(
@@ -53,6 +69,7 @@ class UsersScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
                     ),
                   ),
                   SizedBox(height: 5),
@@ -65,7 +82,9 @@ class UsersScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               const Spacer(),
+
               ElevatedButton.icon(
                 onPressed: () => _showAddUser(context),
                 icon: const Icon(Icons.add, size: 18),
@@ -88,18 +107,29 @@ class UsersScreen extends StatelessWidget {
 
           const SizedBox(height: 25),
 
+          // ================= STAT CARDS =================
           Row(
             children: [
-              _smallStat('1,284', 'Total users'),
+              _smallStat(
+                '1,284',
+                'Total users',
+              ),
               const SizedBox(width: 15),
-              _smallStat('1,176', 'Active users'),
+              _smallStat(
+                '1,176',
+                'Active users',
+              ),
               const SizedBox(width: 15),
-              _smallStat('108', 'Inactive users'),
+              _smallStat(
+                '108',
+                'Inactive users',
+              ),
             ],
           ),
 
           const SizedBox(height: 22),
 
+          // ================= USERS TABLE =================
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -110,15 +140,31 @@ class UsersScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
+                // Search
                 Padding(
                   padding: const EdgeInsets.all(18),
                   child: TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value;
+                      });
+                    },
                     decoration: InputDecoration(
                       hintText: 'Search users...',
                       prefixIcon: const Icon(
                         Icons.search,
                         size: 20,
                       ),
+                      suffixIcon: searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                setState(() {
+                                  searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
                       filled: true,
                       fillColor: const Color(0xFFF9FAFB),
                       border: OutlineInputBorder(
@@ -126,13 +172,44 @@ class UsersScreen extends StatelessWidget {
                         borderSide: BorderSide.none,
                       ),
                       contentPadding:
-                          const EdgeInsets.symmetric(vertical: 12),
+                          const EdgeInsets.symmetric(
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),
+
                 const Divider(height: 1),
+
+                // Table header
                 _tableHeader(),
-                ...users.map((user) => _userRow(user)),
+
+                // User rows
+                if (filteredUsers.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.person_search_outlined,
+                          size: 40,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'No users found',
+                          style: TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...filteredUsers.map(
+                    (user) => _userRow(user),
+                  ),
               ],
             ),
           ),
@@ -141,7 +218,12 @@ class UsersScreen extends StatelessWidget {
     );
   }
 
-  Widget _smallStat(String value, String title) {
+  // ================= STAT CARD =================
+
+  Widget _smallStat(
+    String value,
+    String title,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -160,6 +242,7 @@ class UsersScreen extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
               ),
             ),
             const SizedBox(height: 3),
@@ -176,6 +259,8 @@ class UsersScreen extends StatelessWidget {
     );
   }
 
+  // ================= TABLE HEADER =================
+
   Widget _tableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -187,25 +272,57 @@ class UsersScreen extends StatelessWidget {
         children: [
           Expanded(
             flex: 2,
-            child: Text('USER'),
+            child: Text(
+              'USER',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
           ),
           Expanded(
             flex: 2,
-            child: Text('EMAIL'),
+            child: Text(
+              'EMAIL',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
           ),
           Expanded(
-            child: Text('PHONE'),
+            child: Text(
+              'PHONE',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
           ),
           SizedBox(
             width: 80,
-            child: Text('STATUS'),
+            child: Text(
+              'STATUS',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _userRow(Map<String, String> user) {
+  // ================= USER ROW =================
+
+  Widget _userRow(
+    Map<String, String> user,
+  ) {
     final active = user['status'] == 'Active';
 
     return Container(
@@ -237,7 +354,9 @@ class UsersScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 10),
+
                 Text(
                   user['name']!,
                   style: const TextStyle(
@@ -248,6 +367,7 @@ class UsersScreen extends StatelessWidget {
               ],
             ),
           ),
+
           Expanded(
             flex: 2,
             child: Text(
@@ -258,6 +378,7 @@ class UsersScreen extends StatelessWidget {
               ),
             ),
           ),
+
           Expanded(
             child: Text(
               user['phone']!,
@@ -267,6 +388,7 @@ class UsersScreen extends StatelessWidget {
               ),
             ),
           ),
+
           SizedBox(
             width: 80,
             child: Container(
@@ -298,12 +420,17 @@ class UsersScreen extends StatelessWidget {
     );
   }
 
-  void _showAddUser(BuildContext context) {
+  // ================= ADD USER =================
+
+  void _showAddUser(
+    BuildContext context,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Add user'),
+
           content: const SizedBox(
             width: 400,
             child: Column(
@@ -314,13 +441,17 @@ class UsersScreen extends StatelessWidget {
                     labelText: 'Full name',
                   ),
                 ),
+
                 SizedBox(height: 14),
+
                 TextField(
                   decoration: InputDecoration(
                     labelText: 'Email',
                   ),
                 ),
+
                 SizedBox(height: 14),
+
                 TextField(
                   decoration: InputDecoration(
                     labelText: 'Phone number',
@@ -329,13 +460,19 @@ class UsersScreen extends StatelessWidget {
               ],
             ),
           ),
+
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+              },
               child: const Text('Cancel'),
             ),
+
             ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pop(context);
+              },
               child: const Text('Add user'),
             ),
           ],
