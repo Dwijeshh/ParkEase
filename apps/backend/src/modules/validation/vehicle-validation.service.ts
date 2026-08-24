@@ -67,28 +67,47 @@ export async function validateVehicleAtReservedSlot(
     });
 
     if (!replacementSlot) {
-      const alert = await tx.parkingAlert.create({
-        data: {
-          type: AlertType.NO_COMPATIBLE_SLOT,
-          severity: AlertSeverity.HIGH,
-          message:
-            "Wrong vehicle detected and no compatible replacement slot is available.",
-          expectedVehicleType: reservation.slot.vehicleType,
-          detectedVehicleType: input.detectedVehicleType,
-          userId: reservation.userId,
-          vehicleId: input.detectedVehicleId ?? reservation.vehicleId,
-          slotId: reservation.slotId,
-          reservationId: reservation.id
-        }
-      });
-
-      return {
-        action: "ALERT_CREATED" as const,
-        reservation,
-        replacementSlot: null,
-        alert
-      };
+  const existingAlert = await tx.parkingAlert.findFirst({
+    where: {
+      reservationId: reservation.id,
+      type: AlertType.NO_COMPATIBLE_SLOT,
+      status: {
+        in: ["NEW", "ACKNOWLEDGED"]
+      }
     }
+  });
+
+  if (existingAlert) {
+    return {
+      action: "ALERT_ALREADY_EXISTS" as const,
+      reservation,
+      replacementSlot: null,
+      alert: existingAlert
+    };
+  }
+
+  const alert = await tx.parkingAlert.create({
+    data: {
+      type: AlertType.NO_COMPATIBLE_SLOT,
+      severity: AlertSeverity.HIGH,
+      message:
+        "Wrong vehicle detected and no compatible replacement slot is available.",
+      expectedVehicleType: reservation.slot.vehicleType,
+      detectedVehicleType: input.detectedVehicleType,
+      userId: reservation.userId,
+      vehicleId: input.detectedVehicleId ?? reservation.vehicleId,
+      slotId: reservation.slotId,
+      reservationId: reservation.id
+    }
+  });
+
+  return {
+    action: "ALERT_CREATED" as const,
+    reservation,
+    replacementSlot: null,
+    alert
+  };
+}
 
     await tx.parkingSlot.update({
       where: {
