@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'screens/dashboard_screen.dart';
 
 void main() {
-  runApp(const ParkEaseAdmin());
+  runApp(const ParkEaseApp());
 }
 
-class ParkEaseAdmin extends StatelessWidget {
-  const ParkEaseAdmin({super.key});
+class ParkEaseApp extends StatelessWidget {
+  const ParkEaseApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +15,7 @@ class ParkEaseAdmin extends StatelessWidget {
       title: 'ParkEase Admin',
       theme: ThemeData(
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF6F7F9),
       ),
       home: const DashboardScreen(),
     );
