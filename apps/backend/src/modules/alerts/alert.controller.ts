@@ -37,12 +37,19 @@ export async function getAlerts(_req: Request, res: Response) {
       }
     });
 
-    res.json(alerts);
+    return res.json({
+      success: true,
+      data: alerts
+    });
   } catch (error) {
     console.error("Failed to fetch alerts:", error);
-    res.status(500).json({
-      message: "Failed to fetch alerts"
-    });
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "ALERTS_FETCH_FAILED",
+        message: "Failed to fetch alerts"
+       }
+     });
   }
 }
 
