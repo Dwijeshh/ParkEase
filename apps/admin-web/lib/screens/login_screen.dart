@@ -1,3 +1,4 @@
+import '../services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import 'dashboard_screen.dart';
@@ -10,6 +11,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController =
       TextEditingController();
@@ -28,51 +30,54 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
+
+  setState(() {
+    _errorMessage = null;
+  });
+
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    await _authService.login(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const DashboardScreen(),
+      ),
+    );
+  } on AuthException catch (error) {
+    if (!mounted) return;
 
     setState(() {
-      _errorMessage = null;
+      _errorMessage = error.message;
     });
-
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  } catch (_) {
+    if (!mounted) return;
 
     setState(() {
-      _isLoading = true;
+      _errorMessage = 'Login failed. Please try again.';
     });
-
-    // Temporary login simulation.
-    // This will later be replaced with the real backend API.
-    await Future.delayed(const Duration(seconds: 2));
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    // Temporary credentials for testing.
-    if (email == 'admin@parkease.com' &&
-        password == 'admin123') {
-      if (!mounted) return;
-
+  } finally {
+    if (mounted) {
       setState(() {
         _isLoading = false;
-      });
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const DashboardScreen(),
-        ),
-      );
-    } else {
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Login failed. Please check your email and password.';
       });
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
