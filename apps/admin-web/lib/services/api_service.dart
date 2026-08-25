@@ -1,16 +1,26 @@
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
+
+  Future<Map<String, String>> _headers() async {
+    final token = await _storage.read(key: 'admin_access_token');
+
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty)
+        'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<dynamic> get(String endpoint) async {
     final response = await http.get(
       Uri.parse('$baseUrl$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: await _headers(),
     );
 
     return _handleResponse(response);
@@ -22,9 +32,7 @@ class ApiService {
   ) async {
     final response = await http.post(
       Uri.parse('$baseUrl$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: await _headers(),
       body: jsonEncode(data),
     );
 
@@ -37,9 +45,7 @@ class ApiService {
   ) async {
     final response = await http.put(
       Uri.parse('$baseUrl$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: await _headers(),
       body: jsonEncode(data),
     );
 
@@ -49,9 +55,7 @@ class ApiService {
   Future<dynamic> delete(String endpoint) async {
     final response = await http.delete(
       Uri.parse('$baseUrl$endpoint'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: await _headers(),
     );
 
     return _handleResponse(response);

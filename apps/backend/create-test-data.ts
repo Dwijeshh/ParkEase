@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import {
   PrismaClient,
   UserRole,
@@ -11,10 +12,10 @@ const prisma = new PrismaClient();
 async function main() {
   const user = await prisma.user.create({
     data: {
-      name: "Test Customer",
-      email: `test-${Date.now()}@parkease.local`,
-      password: "test-password",
-      role: UserRole.CUSTOMER
+      name: "Test Administrator",
+      email: `admin-${Date.now()}@parkease.local`,
+      password: await bcrypt.hash("test-password", 10),
+      role: UserRole.ADMIN,
     }
   });
 
@@ -60,6 +61,9 @@ async function main() {
     }
   });
 
+console.log(`Login email: ${user.email}`);
+console.log("Login password: test-password");
+console.log(`Login role: ${user.role}`);
   console.log("\nTest data created successfully:");
   console.log(`userId: ${user.id}`);
   console.log(`vehicleId: ${vehicle.id}`);
