@@ -99,7 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 const SizedBox(height: 18),
 
-                // Menu
+                // ==================== MENU ====================
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -158,7 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-                // Admin profile
+                // ==================== ADMIN PROFILE ====================
                 Container(
                   margin: const EdgeInsets.all(12),
                   padding: const EdgeInsets.all(12),
@@ -212,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: Column(
               children: [
-                // Top bar
+                // ==================== TOP BAR ====================
                 Container(
                   height: 70,
                   padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -237,8 +237,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       const Spacer(),
 
+                      // ==================== NOTIFICATIONS ====================
                       IconButton(
-                        onPressed: () {},
+                        tooltip: 'Notifications',
+                        onPressed: () {
+                          _showNotifications(context);
+                        },
                         icon: const Icon(
                           Icons.notifications_none_outlined,
                           color: Color(0xFF6B7280),
@@ -247,24 +251,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       const SizedBox(width: 5),
 
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: const Icon(
-                          Icons.person_outline,
-                          size: 19,
-                          color: Color(0xFF4B5563),
+                      // ==================== PROFILE ====================
+                      PopupMenuButton<String>(
+                        tooltip: 'Admin profile',
+                        onSelected: (value) {
+                          if (value == 'profile') {
+                            _showProfile(context);
+                          }
+                        },
+                        itemBuilder: (context) {
+                          return const [
+                            PopupMenuItem(
+                              value: 'profile',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.person_outline),
+                                  SizedBox(width: 10),
+                                  Text('View profile'),
+                                ],
+                              ),
+                            ),
+                          ];
+                        },
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Icon(
+                            Icons.person_outline,
+                            size: 19,
+                            color: Color(0xFF4B5563),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Screen
+                // ==================== CURRENT SCREEN ====================
                 Expanded(
                   child: screens[selectedIndex],
                 ),
@@ -275,6 +302,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // DASHBOARD HOME
+  // ============================================================
 
   Widget _buildDashboardHome() {
     return SingleChildScrollView(
@@ -303,6 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 25),
 
+          // ==================== STAT CARDS ====================
           Row(
             children: [
               _statCard(
@@ -333,6 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 25),
 
+          // ==================== PARKING ACTIVITY ====================
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(22),
@@ -343,31 +376,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFFE5E7EB),
               ),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Parking activity',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Parking activity and analytics will appear here.',
+
+                const SizedBox(height: 5),
+
+                const Text(
+                  'Recent activity in your parking facility.',
                   style: TextStyle(
                     color: Color(0xFF6B7280),
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
+                ),
+
+                const SizedBox(height: 20),
+
+                _activityHeader(),
+
+                _activityRow(
+                  'KA 20 AB 1234',
+                  'A-101',
+                  '6:12 PM',
+                  'Active',
+                ),
+
+                _activityRow(
+                  'KA 19 CD 4821',
+                  'A-104',
+                  '5:48 PM',
+                  'Active',
+                ),
+
+                _activityRow(
+                  'KA 05 EF 9210',
+                  'A-106',
+                  '4:25 PM',
+                  'Completed',
+                ),
+
+                _activityRow(
+                  'KA 20 GH 7712',
+                  'A-109',
+                  '5:20 PM',
+                  'Active',
+                ),
+
+                _activityRow(
+                  'KA 18 XY 4421',
+                  'B-102',
+                  '3:42 PM',
+                  'Completed',
                 ),
               ],
             ),
+          ),
+
+          const SizedBox(height: 25),
+
+          // ==================== QUICK OVERVIEW ====================
+          Row(
+            children: [
+              Expanded(
+                child: _overviewCard(
+                  'Today\'s vehicles',
+                  '1,284',
+                  'Vehicles entered today',
+                  Icons.directions_car_outlined,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: _overviewCard(
+                  'Occupancy',
+                  '70%',
+                  'Current facility occupancy',
+                  Icons.pie_chart_outline,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: _overviewCard(
+                  'Revenue today',
+                  '₹18,450',
+                  'Parking revenue generated',
+                  Icons.currency_rupee,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+
+  // ============================================================
+  // STAT CARD
+  // ============================================================
 
   Widget _statCard(
     String value,
@@ -386,12 +498,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: const Color(0xFF16A34A),
-              size: 23,
+            Container(
+              width: 43,
+              height: 43,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: const Color(0xFF16A34A),
+                size: 21,
+              ),
             ),
+
             const SizedBox(width: 12),
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -414,6 +536,371 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // ============================================================
+  // ACTIVITY HEADER
+  // ============================================================
+
+  Widget _activityHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      color: const Color(0xFFF9FAFB),
+      child: const Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              'VEHICLE',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'SLOT',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'TIME',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 75,
+            child: Text(
+              'STATUS',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // ACTIVITY ROW
+  // ============================================================
+
+  Widget _activityRow(
+    String vehicle,
+    String slot,
+    String time,
+    String status,
+  ) {
+    final active = status == 'Active';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 13,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFFF0F0F0),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.directions_car_outlined,
+                  size: 19,
+                  color: Color(0xFF6B7280),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  vehicle,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: Text(
+              slot,
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 12,
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: Text(
+              time,
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 12,
+              ),
+            ),
+          ),
+
+          SizedBox(
+            width: 75,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 7,
+                vertical: 5,
+              ),
+              decoration: BoxDecoration(
+                color: active
+                    ? const Color(0xFFF0FDF4)
+                    : const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                status,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: active
+                      ? const Color(0xFF15803D)
+                      : const Color(0xFF6B7280),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // OVERVIEW CARD
+  // ============================================================
+
+  Widget _overviewCard(
+    String title,
+    String value,
+    String subtitle,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: const Color(0xFF4B5563),
+              size: 21,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 9,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // NOTIFICATIONS
+  // ============================================================
+
+  void _showNotifications(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(
+                Icons.notifications_outlined,
+                color: Color(0xFF16A34A),
+              ),
+              SizedBox(width: 10),
+              Text('Notifications'),
+            ],
+          ),
+          content: const SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(
+                    Icons.warning_amber_outlined,
+                    color: Color(0xFFF59E0B),
+                  ),
+                  title: Text('High occupancy'),
+                  subtitle: Text(
+                    '70% of parking slots are currently occupied.',
+                  ),
+                ),
+                Divider(),
+                ListTile(
+                  leading: Icon(
+                    Icons.local_parking_outlined,
+                    color: Color(0xFF16A34A),
+                  ),
+                  title: Text('New parking session'),
+                  subtitle: Text(
+                    'Vehicle KA 20 AB 1234 entered the facility.',
+                  ),
+                ),
+                Divider(),
+                ListTile(
+                  leading: Icon(
+                    Icons.info_outline,
+                    color: Color(0xFF2563EB),
+                  ),
+                  title: Text('System status'),
+                  subtitle: Text(
+                    'Parking system is operating normally.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // PROFILE
+  // ============================================================
+
+  void _showProfile(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Admin Profile'),
+          content: const SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: Color(0xFFE5E7EB),
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 32,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'Admin',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Administrator',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                SizedBox(height: 15),
+                Divider(),
+                ListTile(
+                  leading: Icon(Icons.email_outlined),
+                  title: Text('admin@parkease.com'),
+                  dense: true,
+                ),
+                ListTile(
+                  leading: Icon(Icons.security_outlined),
+                  title: Text('Administrator access'),
+                  dense: true,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

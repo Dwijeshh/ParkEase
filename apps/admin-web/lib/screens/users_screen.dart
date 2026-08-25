@@ -46,12 +46,18 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredUsers = users.where((user) {
-      final query = searchQuery.toLowerCase();
+      final query = searchQuery.toLowerCase().trim();
 
       return user['name']!.toLowerCase().contains(query) ||
           user['email']!.toLowerCase().contains(query) ||
           user['phone']!.toLowerCase().contains(query);
     }).toList();
+
+    final totalUsers = users.length;
+    final activeUsers =
+        users.where((user) => user['status'] == 'Active').length;
+    final inactiveUsers =
+        users.where((user) => user['status'] == 'Inactive').length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
@@ -87,7 +93,10 @@ class _UsersScreenState extends State<UsersScreen> {
 
               ElevatedButton.icon(
                 onPressed: () => _showAddUser(context),
-                icon: const Icon(Icons.add, size: 18),
+                icon: const Icon(
+                  Icons.add,
+                  size: 18,
+                ),
                 label: const Text('Add user'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF16A34A),
@@ -111,17 +120,17 @@ class _UsersScreenState extends State<UsersScreen> {
           Row(
             children: [
               _smallStat(
-                '1,284',
+                '$totalUsers',
                 'Total users',
               ),
               const SizedBox(width: 15),
               _smallStat(
-                '1,176',
+                '$activeUsers',
                 'Active users',
               ),
               const SizedBox(width: 15),
               _smallStat(
-                '108',
+                '$inactiveUsers',
                 'Inactive users',
               ),
             ],
@@ -140,7 +149,7 @@ class _UsersScreenState extends State<UsersScreen> {
             ),
             child: Column(
               children: [
-                // Search
+                // ================= SEARCH =================
                 Padding(
                   padding: const EdgeInsets.all(18),
                   child: TextField(
@@ -157,7 +166,9 @@ class _UsersScreenState extends State<UsersScreen> {
                       ),
                       suffixIcon: searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear),
+                              icon: const Icon(
+                                Icons.clear,
+                              ),
                               onPressed: () {
                                 setState(() {
                                   searchQuery = '';
@@ -181,10 +192,10 @@ class _UsersScreenState extends State<UsersScreen> {
 
                 const Divider(height: 1),
 
-                // Table header
+                // ================= TABLE HEADER =================
                 _tableHeader(),
 
-                // User rows
+                // ================= USER ROWS =================
                 if (filteredUsers.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(30),
@@ -218,7 +229,9 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  // ================= STAT CARD =================
+  // ============================================================
+  // STAT CARD
+  // ============================================================
 
   Widget _smallStat(
     String value,
@@ -259,7 +272,9 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  // ================= TABLE HEADER =================
+  // ============================================================
+  // TABLE HEADER
+  // ============================================================
 
   Widget _tableHeader() {
     return Container(
@@ -318,7 +333,9 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  // ================= USER ROW =================
+  // ============================================================
+  // USER ROW
+  // ============================================================
 
   Widget _userRow(
     Map<String, String> user,
@@ -347,7 +364,9 @@ class _UsersScreenState extends State<UsersScreen> {
                   radius: 18,
                   backgroundColor: const Color(0xFFEFF6FF),
                   child: Text(
-                    user['name']![0],
+                    user['name']!.isNotEmpty
+                        ? user['name']![0].toUpperCase()
+                        : '?',
                     style: const TextStyle(
                       color: Color(0xFF2563EB),
                       fontWeight: FontWeight.w600,
@@ -420,64 +439,218 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  // ================= ADD USER =================
+  // ============================================================
+  // ADD USER DIALOG
+  // ============================================================
 
   void _showAddUser(
     BuildContext context,
   ) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Add user'),
-
-          content: const SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Full name',
-                  ),
-                ),
-
-                SizedBox(height: 14),
-
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                  ),
-                ),
-
-                SizedBox(height: 14),
-
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Phone number',
-                  ),
-                ),
-              ],
+          title: const Text(
+            'Add user',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
             ),
           ),
 
+          content: SizedBox(
+            width: 400,
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ================= NAME =================
+                  TextFormField(
+                    controller: nameController,
+                    autofocus: true,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Full name',
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                      ),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'Please enter the user name';
+                      }
+
+                      if (value.trim().length < 2) {
+                        return 'Name is too short';
+                      }
+
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // ================= EMAIL =================
+                  TextFormField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                      ),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'Please enter an email';
+                      }
+
+                      final emailRegex = RegExp(
+                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                      );
+
+                      if (!emailRegex.hasMatch(
+                        value.trim(),
+                      )) {
+                        return 'Enter a valid email';
+                      }
+
+                      final alreadyExists = users.any(
+                        (user) =>
+                            user['email']!.toLowerCase() ==
+                            value.trim().toLowerCase(),
+                      );
+
+                      if (alreadyExists) {
+                        return 'This email is already registered';
+                      }
+
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // ================= PHONE =================
+                  TextFormField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone number',
+                      prefixIcon: Icon(
+                        Icons.phone_outlined,
+                      ),
+                      border: OutlineInputBorder(),
+                    ),
+                    onFieldSubmitted: (_) {
+                      _addUserFromDialog(
+                        dialogContext,
+                        formKey,
+                        nameController,
+                        emailController,
+                        phoneController,
+                      );
+                    },
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return 'Please enter a phone number';
+                      }
+
+                      final digits =
+                          value.replaceAll(RegExp(r'\D'), '');
+
+                      if (digits.length < 10) {
+                        return 'Enter a valid phone number';
+                      }
+
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ================= BUTTONS =================
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
               },
               child: const Text('Cancel'),
             ),
 
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                _addUserFromDialog(
+                  dialogContext,
+                  formKey,
+                  nameController,
+                  emailController,
+                  phoneController,
+                );
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Add user'),
             ),
           ],
         );
       },
+    );
+  }
+
+  // ============================================================
+  // ADD USER LOGIC
+  // ============================================================
+
+  void _addUserFromDialog(
+    BuildContext dialogContext,
+    GlobalKey<FormState> formKey,
+    TextEditingController nameController,
+    TextEditingController emailController,
+    TextEditingController phoneController,
+  ) {
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
+
+    final newUser = {
+      'name': nameController.text.trim(),
+      'email': emailController.text.trim(),
+      'phone': phoneController.text.trim(),
+      'status': 'Active',
+    };
+
+    setState(() {
+      users.add(newUser);
+    });
+
+    Navigator.pop(dialogContext);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${newUser['name']} added successfully',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 }

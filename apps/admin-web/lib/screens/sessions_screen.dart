@@ -1,301 +1,485 @@
 import 'package:flutter/material.dart';
 
-class SessionsScreen extends StatelessWidget {
-  const SessionsScreen({super.key});
+class SessionsScreen extends StatefulWidget {
+const SessionsScreen({super.key});
 
-  final List<Map<String, String>> sessions = const [
-    {
-      'vehicle': 'KA 20 AB 1234',
-      'user': 'Rahul Shetty',
-      'slot': 'A-101',
-      'entry': '06:12 PM',
-      'duration': '58 min',
-      'status': 'Active',
-    },
-    {
-      'vehicle': 'KA 19 CD 4821',
-      'user': 'Ananya Rao',
-      'slot': 'A-104',
-      'entry': '05:48 PM',
-      'duration': '1h 22m',
-      'status': 'Active',
-    },
-    {
-      'vehicle': 'KA 05 EF 9210',
-      'user': 'Karthik Pai',
-      'slot': 'A-106',
-      'entry': '04:25 PM',
-      'duration': '2h 45m',
-      'status': 'Completed',
-    },
-    {
-      'vehicle': 'KA 20 GH 7712',
-      'user': 'Meera Nair',
-      'slot': 'A-109',
-      'entry': '05:20 PM',
-      'duration': '1h 50m',
-      'status': 'Active',
-    },
-    {
-      'vehicle': 'KA 18 XY 4421',
-      'user': 'Aditya Kumar',
-      'slot': 'B-102',
-      'entry': '03:42 PM',
-      'duration': '3h 28m',
-      'status': 'Completed',
-    },
-  ];
+@override
+State<SessionsScreen> createState() => _SessionsScreenState();
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+class _SessionsScreenState extends State<SessionsScreen> {
+String searchQuery = '';
+
+final List<Map<String, String>> sessions = [
+{
+'vehicle': 'KA 20 AB 1234',
+'user': 'Rahul Shetty',
+'slot': 'A-101',
+'entry': '6:12 PM',
+'exit': '-',
+'status': 'Active',
+},
+{
+'vehicle': 'KA 19 CD 4821',
+'user': 'Ananya Rao',
+'slot': 'A-104',
+'entry': '5:48 PM',
+'exit': '-',
+'status': 'Active',
+},
+{
+'vehicle': 'KA 05 EF 9210',
+'user': 'Karthik Pai',
+'slot': 'A-106',
+'entry': '4:25 PM',
+'exit': '6:05 PM',
+'status': 'Completed',
+},
+{
+'vehicle': 'KA 20 GH 7712',
+'user': 'Meera Nair',
+'slot': 'A-109',
+'entry': '5:20 PM',
+'exit': '-',
+'status': 'Active',
+},
+{
+'vehicle': 'KA 18 XY 4421',
+'user': 'Aditya Kumar',
+'slot': 'B-102',
+'entry': '3:42 PM',
+'exit': '5:30 PM',
+'status': 'Completed',
+},
+];
+
+@override
+Widget build(BuildContext context) {
+final filteredSessions = sessions.where((session) {
+final query = searchQuery.toLowerCase();
+
+  return session['vehicle']!.toLowerCase().contains(query) ||
+      session['user']!.toLowerCase().contains(query) ||
+      session['slot']!.toLowerCase().contains(query) ||
+      session['status']!.toLowerCase().contains(query);
+}).toList();
+
+return SingleChildScrollView(
+  padding: const EdgeInsets.all(28),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
         children: [
-          const Text(
-            'Parking sessions',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'Track active and completed parking sessions.',
-            style: TextStyle(
-              color: Color(0xFF6B7280),
-              fontSize: 14,
-            ),
-          ),
-
-          const SizedBox(height: 25),
-
-          Row(
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _statCard(
-                '54',
-                'Active sessions',
-                Icons.play_circle_outline,
+              Text(
+                'Sessions',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
               ),
-              const SizedBox(width: 15),
-              _statCard(
-                '126',
-                'Completed today',
-                Icons.check_circle_outline,
-              ),
-              const SizedBox(width: 15),
-              _statCard(
-                '180',
-                'Total today',
-                Icons.today_outlined,
+              SizedBox(height: 5),
+              Text(
+                'Monitor active and completed parking sessions.',
+                style: TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
-
-          const SizedBox(height: 22),
-
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: () {
+              _showStartSession(context);
+            },
+            icon: const Icon(Icons.play_arrow, size: 18),
+            label: const Text('Start session'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 17,
+                vertical: 14,
               ),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Row(
-                    children: [
-                      const Text(
-                        'Today\'s sessions',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const Spacer(),
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.download_outlined,
-                          size: 17,
-                        ),
-                        label: const Text('Export'),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                _header(),
-                ...sessions.map(_sessionRow),
-              ],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9),
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _statCard(
-    String value,
-    String title,
-    IconData icon,
-  ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(18),
+      const SizedBox(height: 25),
+      Row(
+        children: [
+          _smallStat('5', 'Total sessions'),
+          const SizedBox(width: 15),
+          _smallStat('3', 'Active sessions'),
+          const SizedBox(width: 15),
+          _smallStat('2', 'Completed'),
+        ],
+      ),
+      const SizedBox(height: 22),
+      Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: const Color(0xFFE5E7EB),
           ),
         ),
-        child: Row(
+        child: Column(
           children: [
-            Icon(
-              icon,
-              color: const Color(0xFF16A34A),
-              size: 23,
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search sessions...',
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 20,
+                  ),
+                  suffixIcon: searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(9),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
                   ),
                 ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+              ),
             ),
+            const Divider(height: 1),
+            _tableHeader(),
+            if (filteredSessions.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(30),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.search_off_outlined,
+                      size: 40,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'No sessions found',
+                      style: TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ...filteredSessions.map(
+                (session) => _sessionRow(session),
+              ),
           ],
         ),
       ),
-    );
-  }
+    ],
+  ),
+);
 
-  Widget _header() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 13,
-      ),
-      color: const Color(0xFFF9FAFB),
-      child: const Row(
-        children: [
-          Expanded(flex: 2, child: Text('VEHICLE')),
-          Expanded(flex: 2, child: Text('USER')),
-          Expanded(child: Text('SLOT')),
-          Expanded(child: Text('ENTRY')),
-          Expanded(child: Text('DURATION')),
-          SizedBox(width: 75, child: Text('STATUS')),
-        ],
-      ),
-    );
-  }
+}
 
-  Widget _sessionRow(Map<String, String> session) {
-    final active = session['status'] == 'Active';
+Widget _smallStat(
+String value,
+String title,
+) {
+return Expanded(
+child: Container(
+padding: const EdgeInsets.all(18),
+decoration: BoxDecoration(
+color: Colors.white,
+borderRadius: BorderRadius.circular(12),
+border: Border.all(
+color: const Color(0xFFE5E7EB),
+),
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+value,
+style: const TextStyle(
+fontSize: 21,
+fontWeight: FontWeight.w700,
+color: Color(0xFF111827),
+),
+),
+const SizedBox(height: 3),
+Text(
+title,
+style: const TextStyle(
+color: Color(0xFF9CA3AF),
+fontSize: 11,
+),
+),
+],
+),
+),
+);
+}
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 16,
+Widget _tableHeader() {
+return Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 20,
+vertical: 13,
+),
+color: const Color(0xFFF9FAFB),
+child: const Row(
+children: [
+Expanded(
+flex: 2,
+child: Text(
+'VEHICLE',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w600,
+color: Color(0xFF6B7280),
+),
+),
+),
+Expanded(
+flex: 2,
+child: Text(
+'USER',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w600,
+color: Color(0xFF6B7280),
+),
+),
+),
+Expanded(
+child: Text(
+'SLOT',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w600,
+color: Color(0xFF6B7280),
+),
+),
+),
+Expanded(
+child: Text(
+'ENTRY',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w600,
+color: Color(0xFF6B7280),
+),
+),
+),
+Expanded(
+child: Text(
+'EXIT',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w600,
+color: Color(0xFF6B7280),
+),
+),
+),
+SizedBox(
+width: 80,
+child: Text(
+'STATUS',
+style: TextStyle(
+fontSize: 10,
+fontWeight: FontWeight.w600,
+color: Color(0xFF6B7280),
+),
+),
+),
+],
+),
+);
+}
+
+Widget _sessionRow(
+Map<String, String> session,
+) {
+final active = session['status'] == 'Active';
+
+return Container(
+  padding: const EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 15,
+  ),
+  decoration: const BoxDecoration(
+    border: Border(
+      bottom: BorderSide(
+        color: Color(0xFFF0F0F0),
       ),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFF0F0F0),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
+    ),
+  ),
+  child: Row(
+    children: [
+      Expanded(
+        flex: 2,
+        child: Row(
+          children: [
+            const Icon(
+              Icons.directions_car_outlined,
+              size: 19,
+              color: Color(0xFF6B7280),
+            ),
+            const SizedBox(width: 8),
+            Text(
               session['vehicle']!,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              session['user']!,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              session['slot']!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              session['entry']!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              session['duration']!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 75,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 7,
-                vertical: 5,
-              ),
-              decoration: BoxDecoration(
-                color: active
-                    ? const Color(0xFFF0FDF4)
-                    : const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                session['status']!,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: active
-                      ? const Color(0xFF15803D)
-                      : const Color(0xFF6B7280),
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
+      Expanded(
+        flex: 2,
+        child: Text(
+          session['user']!,
+          style: const TextStyle(
+            color: Color(0xFF374151),
+            fontSize: 12,
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          session['slot']!,
+          style: const TextStyle(
+            color: Color(0xFF6B7280),
+            fontSize: 12,
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          session['entry']!,
+          style: const TextStyle(
+            color: Color(0xFF6B7280),
+            fontSize: 12,
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          session['exit']!,
+          style: const TextStyle(
+            color: Color(0xFF6B7280),
+            fontSize: 12,
+          ),
+        ),
+      ),
+      SizedBox(
+        width: 80,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 5,
+          ),
+          decoration: BoxDecoration(
+            color: active
+                ? const Color(0xFFF0FDF4)
+                : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            session['status']!,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: active
+                  ? const Color(0xFF15803D)
+                  : const Color(0xFF6B7280),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+);
+
+}
+
+void _showStartSession(
+BuildContext context,
+) {
+showDialog(
+context: context,
+builder: (context) {
+return AlertDialog(
+title: const Text('Start parking session'),
+content: const SizedBox(
+width: 400,
+child: Column(
+mainAxisSize: MainAxisSize.min,
+children: [
+TextField(
+decoration: InputDecoration(
+labelText: 'Vehicle number',
+),
+),
+SizedBox(height: 14),
+TextField(
+decoration: InputDecoration(
+labelText: 'User name',
+),
+),
+SizedBox(height: 14),
+TextField(
+decoration: InputDecoration(
+labelText: 'Parking slot',
+),
+),
+],
+),
+),
+actions: [
+TextButton(
+onPressed: () {
+Navigator.pop(context);
+},
+child: const Text('Cancel'),
+),
+ElevatedButton(
+onPressed: () {
+Navigator.pop(context);
+},
+child: const Text('Start session'),
+),
+],
+);
+},
+);
+}
 }
