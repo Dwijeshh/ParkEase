@@ -107,16 +107,25 @@ class _ParkingScreenState extends State<ParkingScreen> {
             style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
           ),
           const SizedBox(height: 25),
-          Row(
-            children: [
-              _summaryCard('$total', 'Total slots', Icons.grid_view_rounded),
-              const SizedBox(width: 15),
-              _summaryCard('$occupied', 'Occupied', Icons.directions_car_outlined),
-              const SizedBox(width: 15),
-              _summaryCard('$available', 'Available', Icons.check_circle_outline),
-              const SizedBox(width: 15),
-              _summaryCard('$reserved', 'Reserved', Icons.bookmark_border),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = constraints.maxWidth >= 900
+                  ? (constraints.maxWidth - 45) / 4
+                  : constraints.maxWidth >= 600
+                      ? (constraints.maxWidth - 15) / 2
+                      : constraints.maxWidth;
+
+              return Wrap(
+                spacing: 15,
+                runSpacing: 15,
+                children: [
+                  SizedBox(width: cardWidth, child: _summaryCard('$total', 'Total slots', Icons.grid_view_rounded)),
+                  SizedBox(width: cardWidth, child: _summaryCard('$occupied', 'Occupied', Icons.directions_car_outlined)),
+                  SizedBox(width: cardWidth, child: _summaryCard('$available', 'Available', Icons.check_circle_outline)),
+                  SizedBox(width: cardWidth, child: _summaryCard('$reserved', 'Reserved', Icons.bookmark_border)),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 25),
           Container(
@@ -127,28 +136,28 @@ class _ParkingScreenState extends State<ParkingScreen> {
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     const Text(
                       'Parking slots',
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                     ),
-                    const Spacer(),
                     ...['All', 'Available', 'Occupied', 'Reserved'].map(
-                      (filter) => Padding(
-                        padding: const EdgeInsets.only(left: 7),
-                        child: ChoiceChip(
-                          label: Text(filter),
-                          selected: selectedFilter == filter,
-                          onSelected: (_) => setState(() => selectedFilter = filter),
-                          selectedColor: const Color(0xFFDCFCE7),
-                          labelStyle: TextStyle(
-                            color: selectedFilter == filter
-                                ? const Color(0xFF15803D)
-                                : const Color(0xFF6B7280),
-                            fontSize: 11,
-                          ),
+                      (filter) => ChoiceChip(
+                        label: Text(filter),
+                        selected: selectedFilter == filter,
+                        onSelected: (_) => setState(() => selectedFilter = filter),
+                        selectedColor: const Color(0xFFDCFCE7),
+                        labelStyle: TextStyle(
+                          color: selectedFilter == filter
+                              ? const Color(0xFF15803D)
+                              : const Color(0xFF6B7280),
+                          fontSize: 11,
                         ),
                       ),
                     ),
@@ -158,23 +167,24 @@ class _ParkingScreenState extends State<ParkingScreen> {
                 if (isLoading)
                   const Padding(
                     padding: EdgeInsets.all(32),
-                    child: CircularProgressIndicator(),
+                    child: Center(child: CircularProgressIndicator()),
                   )
                 else if (errorMessage != null)
-                  Column(
-                    children: [
-                      Text(errorMessage!),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: _loadSlots,
-                        child: const Text('Retry'),
-                      ),
-                    ],
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(errorMessage!),
+                        const SizedBox(height: 12),
+                        ElevatedButton(onPressed: _loadSlots, child: const Text('Retry')),
+                      ],
+                    ),
                   )
                 else if (filteredSlots.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Text('No parking slots found.'),
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text('No parking slots found.'),
+                    ),
                   )
                 else
                   GridView.builder(
@@ -182,7 +192,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 170,
-                      mainAxisExtent: 105,
+                      mainAxisExtent: 125,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),
@@ -198,27 +208,25 @@ class _ParkingScreenState extends State<ParkingScreen> {
   }
 
   Widget _summaryCard(String value, String title, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: const Color(0xFF16A34A), size: 23),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                Text(title, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
-              ],
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF16A34A), size: 23),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -270,7 +278,12 @@ class _ParkingScreenState extends State<ParkingScreen> {
               ],
             ),
             const Spacer(),
-            Text(slot['id'].toString(), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+            Text(
+              slot['id'].toString(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            ),
             const SizedBox(height: 3),
             Text(slot['status'].toString(), style: TextStyle(color: iconColor, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
