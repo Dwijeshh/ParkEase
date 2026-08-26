@@ -66,9 +66,9 @@ class _FacilityMapState extends State<FacilityMap> with SingleTickerProviderStat
       aspectRatio: _canvasWidth / _canvasHeight,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F6FB),
+          color: AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: AppColors.border),
         ),
         padding: const EdgeInsets.all(6),
         child: FittedBox(
@@ -137,11 +137,11 @@ class _FacilityMapState extends State<FacilityMap> with SingleTickerProviderStat
                   height: 30,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.brown.shade200,
+                      color: const Color(0xFF3A2E1F),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.shield_outlined, size: 14, color: Colors.brown),
+                    child: const Icon(Icons.shield_outlined, size: 14, color: Color(0xFFC9A876)),
                   ),
                 ),
                 ..._entrancePoints.entries.map((e) {
@@ -153,9 +153,9 @@ class _FacilityMapState extends State<FacilityMap> with SingleTickerProviderStat
                       width: 18,
                       height: 18,
                       decoration: BoxDecoration(
-                        color: isActive ? AppColors.success : Colors.white,
+                        color: isActive ? AppColors.success : AppColors.surface,
                         shape: BoxShape.circle,
-                        border: Border.all(color: isActive ? AppColors.success : Colors.grey.shade400, width: 2),
+                        border: Border.all(color: isActive ? AppColors.success : AppColors.border, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -163,7 +163,7 @@ class _FacilityMapState extends State<FacilityMap> with SingleTickerProviderStat
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: isActive ? Colors.white : Colors.grey.shade600,
+                          color: isActive ? Colors.white : AppColors.textMuted,
                         ),
                       ),
                     ),
@@ -215,16 +215,16 @@ class _MallBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E3C3),
+        color: const Color(0xFF362B1C),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFD9BE8F)),
+        border: Border.all(color: const Color(0xFF5C4E33)),
       ),
       alignment: Alignment.center,
       child: RotatedBox(
         quarterTurns: 3,
         child: Text(
           'COMMERCIAL BUILDING',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.brown.shade700, letterSpacing: 0.5),
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFFC9B183), letterSpacing: 0.5),
         ),
       ),
     );
@@ -241,9 +241,9 @@ class _ZoneBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: active ? AppColors.success.withValues(alpha: 0.15) : Colors.white,
+        color: active ? AppColors.success.withValues(alpha: 0.22) : AppColors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: active ? AppColors.success : Colors.grey.shade300, width: active ? 2 : 1),
+        border: Border.all(color: active ? AppColors.success : AppColors.border, width: active ? 2 : 1),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -251,7 +251,7 @@ class _ZoneBox extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: active ? AppColors.success : Colors.grey.shade500,
+          color: active ? AppColors.success : AppColors.textMuted,
         ),
       ),
     );

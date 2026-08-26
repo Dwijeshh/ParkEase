@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+
+import '../models.dart';
 import '../theme.dart';
 import '../utils/page_transition.dart';
 import 'destination.dart';
+
+/// Demo QR payload for this entry gate: (id, mallName, city, capacity, ratePerHour).
+const _demoLotQr = "(1, 'Mall1', 'Udupi', 100, 20)";
 
 class QrScanScreen extends StatefulWidget {
   const QrScanScreen({super.key});
@@ -10,36 +15,24 @@ class QrScanScreen extends StatefulWidget {
   State<QrScanScreen> createState() => _QrScanScreenState();
 }
 
-class _QrScanScreenState extends State<QrScanScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _scanController;
+class _QrScanScreenState extends State<QrScanScreen> {
   bool _scanned = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _scanController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))
-      ..repeat(reverse: true);
+  Future<void> _scanQr() async {
+    if (_scanned) return;
 
-    Future.delayed(const Duration(seconds: 2), () async {
-      if (!mounted) return;
-      _scanController.stop();
-      setState(() => _scanned = true);
-      await Future.delayed(const Duration(milliseconds: 700));
-      if (!mounted) return;
-      Navigator.of(context).push(slideRoute(const DestinationScreen()));
-    });
-  }
+    final lotInfo = LotInfo.parse(_demoLotQr);
 
-  @override
-  void dispose() {
-    _scanController.dispose();
-    super.dispose();
+    setState(() => _scanned = true);
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    Navigator.of(context).push(slideRoute(DestinationScreen(lotInfo: lotInfo)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -55,43 +48,23 @@ class _QrScanScreenState extends State<QrScanScreen> with SingleTickerProviderSt
             ),
             Expanded(
               child: Center(
-                child: SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: _scanned ? AppColors.success : Colors.white70,
-                            width: 3,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                child: GestureDetector(
+                  onTap: _scanQr,
+                  child: Container(
+                    width: 260,
+                    height: 260,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _scanned ? AppColors.success : Colors.white70,
+                        width: 3,
                       ),
-                      if (!_scanned)
-                        AnimatedBuilder(
-                          animation: _scanController,
-                          builder: (context, child) {
-                            return Align(
-                              alignment: Alignment(0, -1 + 2 * _scanController.value),
-                              child: Container(
-                                width: 220,
-                                height: 2.5,
-                                decoration: BoxDecoration(
-                                  color: AppColors.accent,
-                                  boxShadow: [
-                                    BoxShadow(color: AppColors.accent.withValues(alpha: 0.8), blurRadius: 8),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      if (_scanned)
-                        const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 72),
-                    ],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: _scanned
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 72)
+                          : const Icon(Icons.qr_code_2_rounded, color: Colors.white70, size: 100),
+                    ),
                   ),
                 ),
               ),
@@ -99,7 +72,7 @@ class _QrScanScreenState extends State<QrScanScreen> with SingleTickerProviderSt
             Padding(
               padding: const EdgeInsets.only(bottom: 48),
               child: Text(
-                _scanned ? 'QR code verified' : 'Position the QR code within the frame',
+                _scanned ? 'QR code verified' : 'Tap the scanner area to simulate scanning',
                 style: TextStyle(color: Colors.grey.shade300, fontSize: 14),
               ),
             ),

@@ -48,7 +48,7 @@ class ExitMapScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: AppColors.primary.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -68,13 +68,14 @@ class ExitMapScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'From Slot ${assignment.slot}',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -91,10 +92,10 @@ class ExitMapScreen extends StatelessWidget {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE9EEF3),
+                    color: AppColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: Colors.grey.shade300,
+                      color: AppColors.border,
                     ),
                   ),
                   child: Stack(
@@ -108,7 +109,7 @@ class ExitMapScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black54,
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ),
@@ -121,17 +122,17 @@ class ExitMapScreen extends StatelessWidget {
                         child: Container(
                           height: 90,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.grey.shade300,
+                              color: AppColors.border,
                             ),
                           ),
-                          child: Center(
+                          child: const Center(
                             child: Text(
                               'Parking Area',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: AppColors.textMuted,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -251,10 +252,10 @@ class ExitMapScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            const Text(
                               'Parking Exit',
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: AppColors.textMuted,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -287,10 +288,10 @@ class ExitMapScreen extends StatelessWidget {
                     color: AppColors.primary,
                   ),
                   const SizedBox(width: 10),
-                  Text(
+                  const Text(
                     'Follow the marked route to the exit',
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -1,35 +1,44 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const primary = Color(0xFF1565C0);
-  static const primaryDark = Color(0xFF0D47A1);
-  static const accent = Color(0xFF42A5F5);
-  static const success = Color(0xFF2E7D32);
-  static const danger = Color(0xFFC62828);
-  static const background = Color(0xFFF3F6FB);
-  static const surface = Colors.white;
-  static const textMuted = Color(0xFF6B7A90);
+  static const primary = Color(0xFF5B8DEF);
+  static const primaryDark = Color(0xFF3A66C4);
+  static const accent = Color(0xFF7DA6F5);
+  static const success = Color(0xFF34D399);
+  static const danger = Color(0xFFEF4444);
+  static const background = Color(0xFF0E1116);
+  static const surface = Color(0xFF171B22);
+  static const surfaceAlt = Color(0xFF1F242C);
+  static const border = Color(0xFF2A2F38);
+  static const textPrimary = Color(0xFFF3F4F6);
+  static const textMuted = Color(0xFF9AA3AF);
 }
 
 ThemeData buildAppTheme() {
   final base = ThemeData(
     useMaterial3: true,
+    brightness: Brightness.dark,
     colorSchemeSeed: AppColors.primary,
     scaffoldBackgroundColor: AppColors.background,
   );
 
   return base.copyWith(
+    textTheme: base.textTheme.apply(
+      bodyColor: AppColors.textPrimary,
+      displayColor: AppColors.textPrimary,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      foregroundColor: Color(0xFF0D2A4A),
+      foregroundColor: AppColors.textPrimary,
       centerTitle: true,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: Colors.grey.shade300,
+        disabledBackgroundColor: AppColors.border,
+        disabledForegroundColor: AppColors.textMuted,
         minimumSize: const Size.fromHeight(54),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -47,15 +56,16 @@ ThemeData buildAppTheme() {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.surface,
+      hintStyle: const TextStyle(color: AppColors.textMuted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -63,11 +73,11 @@ ThemeData buildAppTheme() {
       ),
     ),
     cardTheme: CardThemeData(
-      color: Colors.white,
+      color: AppColors.surface,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: const BorderSide(color: AppColors.border),
       ),
     ),
   );
