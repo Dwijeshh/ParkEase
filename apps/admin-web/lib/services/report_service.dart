@@ -3,6 +3,12 @@ import 'api_service.dart';
 class ReportService {
   final ApiService _apiService = ApiService();
 
+  /// Single-call summary: totalVehicles, totalSlots, occupiedSlots,
+  /// availableSlots, reservedSlots, occupancy, revenue
+  Future<dynamic> getSummary() async {
+    return await _apiService.get('/reports');
+  }
+
   Future<dynamic> getDailyReport() async {
     return await _apiService.get('/reports/daily');
   }

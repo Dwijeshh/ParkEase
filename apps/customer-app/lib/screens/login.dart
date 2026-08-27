@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../theme.dart';
 import '../utils/page_transition.dart';
 import '../widgets/brand_header.dart';
 import 'scan.dart';
-
-const _demoPassword = 'pass123';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,48 +13,92 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController();
+  // Existing user fields
+  final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
-  final _plateController = TextEditingController();
+
+  // New user extra fields
+  final _nameController    = TextEditingController();
+  final _phoneController   = TextEditingController();
+  final _plateController   = TextEditingController();
 
   bool _isNewUser = false;
-  bool _loading = false;
+  bool _loading   = false;
   String? _error;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
     _plateController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    if (_phoneController.text.trim().length < 10) {
-      setState(() => _error = 'Enter a valid 10-digit phone number');
+    final email    = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _error = 'Enter a valid email address');
       return;
     }
-    if (_isNewUser && _plateController.text.trim().isEmpty) {
-      setState(() => _error = 'Enter your vehicle number plate');
+    if (password.isEmpty) {
+      setState(() => _error = 'Enter your password');
       return;
     }
-    if (_passwordController.text != _demoPassword) {
-      setState(() => _error = 'Incorrect password, try pass123 for this demo');
-      return;
+    if (_isNewUser) {
+      if (_nameController.text.trim().isEmpty) {
+        setState(() => _error = 'Enter your name');
+        return;
+      }
+      if (_phoneController.text.trim().length < 10) {
+        setState(() => _error = 'Enter a valid 10-digit phone number');
+        return;
+      }
+      if (_plateController.text.trim().isEmpty) {
+        setState(() => _error = 'Enter your vehicle number plate');
+        return;
+      }
     }
+
     setState(() {
       _loading = true;
-      _error = null;
+      _error   = null;
     });
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    Navigator.of(context).push(slideRoute(const QrScanScreen()));
+
+    try {
+      if (_isNewUser) {
+        await CustomerApiService.register(
+          name:         _nameController.text.trim(),
+          email:        email,
+          phone:        _phoneController.text.trim(),
+          password:     password,
+          licensePlate: _plateController.text.trim().toUpperCase(),
+          vehicleType:  'Car',
+        );
+      }
+      // Login (for new users, login right after register)
+      await CustomerApiService.login(email, password);
+
+      if (!mounted) return;
+      Navigator.of(context).push(slideRoute(const QrScanScreen()));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _error = 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _selectMode(bool isNewUser) {
     setState(() {
       _isNewUser = isNewUser;
-      _error = null;
+      _error     = null;
     });
   }
 
@@ -81,27 +124,34 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 28),
-              Text(
-                'Phone number',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                maxLength: 10,
-                decoration: const InputDecoration(
-                  hintText: '98765 43210',
-                  prefixIcon: Icon(Icons.phone_android_rounded),
-                  counterText: '',
-                ),
-              ),
+
+              // ── New user extras ──────────────────────────────
               if (_isNewUser) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Vehicle number plate',
-                  style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                _label('Full name'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    hintText: 'Aditya Kumar',
+                    prefixIcon: Icon(Icons.person_outline_rounded),
+                  ),
                 ),
+                const SizedBox(height: 16),
+                _label('Phone number'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  decoration: const InputDecoration(
+                    hintText: '98765 43210',
+                    prefixIcon: Icon(Icons.phone_android_rounded),
+                    counterText: '',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _label('Vehicle number plate'),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _plateController,
@@ -111,12 +161,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: Icon(Icons.directions_car_filled_rounded),
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
-              const SizedBox(height: 16),
-              Text(
-                'Password',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+
+              // ── Email ─────────────────────────────────────────
+              _label('Email address'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  hintText: 'you@example.com',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
               ),
+              const SizedBox(height: 16),
+
+              // ── Password ──────────────────────────────────────
+              _label('Password'),
               const SizedBox(height: 8),
               TextField(
                 controller: _passwordController,
@@ -126,11 +188,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   prefixIcon: Icon(Icons.lock_outline_rounded),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Demo password is pass123',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-              ),
+
+              if (!_isNewUser) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Use the email & password you registered with',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                ),
+              ],
+
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
@@ -155,6 +221,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  Widget _label(String text) => Text(
+    text,
+    style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+  );
 }
 
 class _ModeButton extends StatelessWidget {

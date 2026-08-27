@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../services/report_service.dart';
+import '../services/session_service.dart';
 import 'parking_screen.dart';
 import 'users_screen.dart';
 import 'vehicles_screen.dart';
@@ -16,6 +19,13 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
+
+  // ── Live data ──────────────────────────────────────────────
+  bool _loading = true;
+  Map<String, dynamic> _summary = {};
+  List<Map<String, dynamic>> _recentSessions = [];
+  String _adminEmail = '';
+  String _adminName = 'Admin';
 
   final List<String> menuItems = [
     'Dashboard',
@@ -38,9 +48,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final results = await Future.wait([
+        ReportService().getSummary(),
+        SessionService().getSessions(),
+        storage.read(key: 'admin_email'),
+      ]);
+
+      final summaryRaw = results[0];
+      final sessionsRaw = results[1];
+      final email = (results[2] as String?) ?? '';
+
+      // Parse summary — backend returns flat object (not nested under 'data')
+      Map<String, dynamic> summary = {};
+      if (summaryRaw is Map<String, dynamic>) {
+        summary = summaryRaw['data'] is Map
+            ? Map<String, dynamic>.from(summaryRaw['data'])
+            : Map<String, dynamic>.from(summaryRaw);
+      }
+
+      // Parse sessions
+      List<Map<String, dynamic>> sessions = [];
+      if (sessionsRaw is Map<String, dynamic>) {
+        final data = sessionsRaw['data'];
+        if (data is List) {
+          sessions = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+      }
+
+      // Derive admin display name from email (part before @)
+      final local = email.split('@').first;
+      final displayName = local.isNotEmpty
+          ? local[0].toUpperCase() + local.substring(1)
+          : 'Admin';
+
+      if (!mounted) return;
+      setState(() {
+        _summary = summary;
+        _recentSessions = sessions.take(5).toList();
+        _adminEmail = email;
+        _adminName = displayName;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
-      _buildDashboardHome(),
+      _loading ? const Center(child: CircularProgressIndicator()) : _buildDashboardHome(),
       const ParkingScreen(),
       const UsersScreen(),
       const VehiclesScreen(),
@@ -166,9 +232,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 19,
                         backgroundColor: Color(0xFF374151),
                         child: Icon(
@@ -177,23 +243,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           size: 20,
                         ),
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Admin',
-                              style: TextStyle(
+                              _adminName,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Administrator',
-                              style: TextStyle(
+                              _adminEmail.isNotEmpty ? _adminEmail : 'Administrator',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
                                 color: Color(0xFF9CA3AF),
                                 fontSize: 10,
                               ),
@@ -308,6 +375,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ============================================================
 
   Widget _buildDashboardHome() {
+    final totalSlots   = _summary['totalSlots']?.toString()   ?? '-';
+    final occupied     = _summary['occupiedSlots']?.toString() ?? '-';
+    final available    = _summary['availableSlots']?.toString() ?? '-';
+    final reserved     = _summary['reservedSlots']?.toString()  ?? '-';
+    final totalVeh     = _summary['totalVehicles']?.toString()  ?? '-';
+    final occupancyRaw = _summary['occupancy'];
+    final occupancy    = occupancyRaw != null
+        ? '${double.tryParse(occupancyRaw.toString())?.toStringAsFixed(1) ?? occupancyRaw}%'
+        : '-';
+    final revenueRaw   = _summary['revenue'];
+    final revenue      = revenueRaw != null
+        ? '₹${double.tryParse(revenueRaw.toString())?.toStringAsFixed(0) ?? revenueRaw}'
+        : '-';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
       child: Column(
@@ -337,29 +418,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // ==================== STAT CARDS ====================
           Row(
             children: [
-              _statCard(
-                '240',
-                'Total slots',
-                Icons.grid_view_rounded,
-              ),
+              _statCard(totalSlots, 'Total slots', Icons.grid_view_rounded),
               const SizedBox(width: 15),
-              _statCard(
-                '168',
-                'Occupied',
-                Icons.directions_car_outlined,
-              ),
+              _statCard(occupied, 'Occupied', Icons.directions_car_outlined),
               const SizedBox(width: 15),
-              _statCard(
-                '72',
-                'Available',
-                Icons.check_circle_outline,
-              ),
+              _statCard(available, 'Available', Icons.check_circle_outline),
               const SizedBox(width: 15),
-              _statCard(
-                '8',
-                'Reserved',
-                Icons.bookmark_border,
-              ),
+              _statCard(reserved, 'Reserved', Icons.bookmark_border),
             ],
           ),
 
@@ -401,40 +466,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 _activityHeader(),
 
-                _activityRow(
-                  'KA 20 AB 1234',
-                  'A-101',
-                  '6:12 PM',
-                  'Active',
-                ),
-
-                _activityRow(
-                  'KA 19 CD 4821',
-                  'A-104',
-                  '5:48 PM',
-                  'Active',
-                ),
-
-                _activityRow(
-                  'KA 05 EF 9210',
-                  'A-106',
-                  '4:25 PM',
-                  'Completed',
-                ),
-
-                _activityRow(
-                  'KA 20 GH 7712',
-                  'A-109',
-                  '5:20 PM',
-                  'Active',
-                ),
-
-                _activityRow(
-                  'KA 18 XY 4421',
-                  'B-102',
-                  '3:42 PM',
-                  'Completed',
-                ),
+                if (_recentSessions.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Center(
+                      child: Text('No recent sessions', style: TextStyle(color: Color(0xFF9CA3AF))),
+                    ),
+                  )
+                else
+                  ..._recentSessions.map((s) {
+                    return _activityRow(
+                      s['vehicle']?.toString() ?? s['license_plate']?.toString() ?? '-',
+                      s['slot']?.toString() ?? s['slot_code']?.toString() ?? '-',
+                      s['entry']?.toString() ?? _formatIso(s['check_in_time']?.toString()),
+                      s['status']?.toString() == 'Active' || s['status']?.toString() == 'ACTIVE'
+                          ? 'Active'
+                          : 'Completed',
+                    );
+                  }),
               ],
             ),
           ),
@@ -446,9 +495,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: _overviewCard(
-                  'Today\'s vehicles',
-                  '1,284',
-                  'Vehicles entered today',
+                  'Total vehicles',
+                  totalVeh,
+                  'Registered vehicles',
                   Icons.directions_car_outlined,
                 ),
               ),
@@ -456,7 +505,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Expanded(
                 child: _overviewCard(
                   'Occupancy',
-                  '70%',
+                  occupancy,
                   'Current facility occupancy',
                   Icons.pie_chart_outline,
                 ),
@@ -464,9 +513,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 15),
               Expanded(
                 child: _overviewCard(
-                  'Revenue today',
-                  '₹18,450',
-                  'Parking revenue generated',
+                  'Revenue',
+                  revenue,
+                  'Total parking revenue',
                   Icons.currency_rupee,
                 ),
               ),
@@ -475,6 +524,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  String _formatIso(String? iso) {
+    if (iso == null) return '-';
+    final dt = DateTime.tryParse(iso)?.toLocal();
+    if (dt == null) return '-';
+    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour < 12 ? 'AM' : 'PM';
+    return '$h:$m $period';
   }
 
   // ============================================================
@@ -800,7 +859,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   title: Text('High occupancy'),
                   subtitle: Text(
-                    '70% of parking slots are currently occupied.',
+                    'Parking slots are filling up. Monitor availability.',
                   ),
                 ),
                 Divider(),
@@ -811,7 +870,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   title: Text('New parking session'),
                   subtitle: Text(
-                    'Vehicle KA 20 AB 1234 entered the facility.',
+                    'A vehicle has entered the facility.',
                   ),
                 ),
                 Divider(),
@@ -849,12 +908,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Admin Profile'),
-          content: const SizedBox(
+          content: SizedBox(
             width: 320,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 32,
                   backgroundColor: Color(0xFFE5E7EB),
                   child: Icon(
@@ -863,29 +922,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Color(0xFF4B5563),
                   ),
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 Text(
-                  'Admin',
-                  style: TextStyle(
+                  _adminName,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                SizedBox(height: 4),
-                Text(
+                const SizedBox(height: 4),
+                const Text(
                   'Administrator',
                   style: TextStyle(
                     color: Color(0xFF6B7280),
                   ),
                 ),
-                SizedBox(height: 15),
-                Divider(),
+                const SizedBox(height: 15),
+                const Divider(),
                 ListTile(
-                  leading: Icon(Icons.email_outlined),
-                  title: Text('admin@parkease.com'),
+                  leading: const Icon(Icons.email_outlined),
+                  title: Text(_adminEmail.isNotEmpty ? _adminEmail : '-'),
                   dense: true,
                 ),
-                ListTile(
+                const ListTile(
                   leading: Icon(Icons.security_outlined),
                   title: Text('Administrator access'),
                   dense: true,

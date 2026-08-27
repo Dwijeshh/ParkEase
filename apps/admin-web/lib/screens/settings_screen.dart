@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import '../services/report_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -14,10 +15,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool autoAllocation = true;
   bool alertSystem = true;
 
-  String _adminEmail = '';
-  String _adminName = '';
-  bool _isLoadingProfile = true;
+  // Live admin info
+  String _adminName = '-';
+  String _adminEmail = '-';
   String _totalSlots = '-';
+  bool _isLoadingProfile = true;
 
   @override
   void initState() {
@@ -26,27 +28,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadProfile() async {
-    const storage = FlutterSecureStorage();
-    final email = await storage.read(key: 'admin_email') ?? '';
-
-    dynamic occupancyData;
     try {
-      occupancyData = await ReportService().getOccupancyReport();
-    } catch (_) {
-      occupancyData = null;
-    }
+      const storage = FlutterSecureStorage();
+      final results = await Future.wait([
+        storage.read(key: 'admin_email'),
+        ReportService().getSummary(),
+      ]);
 
-    setState(() {
-      _adminEmail = email;
-      // Derive display name: capitalize part before @
+      final email = (results[0] as String?) ?? '';
+      final summaryRaw = results[1];
+
+      // Derive display name from email
       final local = email.split('@').first;
-      _adminName = local.isNotEmpty
+      final displayName = local.isNotEmpty
           ? local[0].toUpperCase() + local.substring(1)
           : 'Admin';
-      _isLoadingProfile = false;
-      _totalSlots =
-          '${occupancyData?['data']?['total_slots'] ?? 240} slots';
-    });
+
+      // Parse total slots
+      int? total;
+      if (summaryRaw is Map<String, dynamic>) {
+        final data = summaryRaw['data'] is Map ? summaryRaw['data'] : summaryRaw;
+        total = int.tryParse(data['totalSlots']?.toString() ?? '');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _adminEmail = email.isNotEmpty ? email : '-';
+        _adminName = displayName;
+        _totalSlots = total != null ? '$total slots' : '-';
+        _isLoadingProfile = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingProfile = false);
+    }
   }
 
   @override
@@ -127,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Facility information',
             children: [
               _infoRow('Facility name', 'ParkEase Parking Facility'),
-              _infoRow('Total capacity', _totalSlots),
+              _infoRow('Total capacity', _isLoadingProfile ? 'Loading…' : _totalSlots),
               _infoRow('Available gates', '3'),
               _infoRow('System status', 'Operational'),
             ],
@@ -138,23 +153,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _section(
             title: 'Administrator',
             children: [
-              _isLoadingProfile
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        _infoRow('Name', _adminName),
-                        _infoRow('Role', 'System Administrator'),
-                        _infoRow(
-                          'Email',
-                          _adminEmail.isEmpty ? '-' : _adminEmail,
-                        ),
-                      ],
-                    ),
+              _infoRow('Name', _isLoadingProfile ? 'Loading…' : _adminName),
+              _infoRow('Role', 'System Administrator'),
+              _infoRow('Email', _isLoadingProfile ? 'Loading…' : _adminEmail),
             ],
           ),
         ],
