@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../services/parking_service.dart';
 
 class ParkingScreen extends StatefulWidget {
@@ -11,7 +10,6 @@ class ParkingScreen extends StatefulWidget {
 
 class _ParkingScreenState extends State<ParkingScreen> {
   final ParkingService _parkingService = ParkingService();
-  String selectedFilter = 'All';
   List<Map<String, dynamic>> slots = [];
   bool isLoading = true;
   String? errorMessage;
@@ -67,6 +65,7 @@ class _ParkingScreenState extends State<ParkingScreen> {
   String _displayStatus(String status) {
     switch (status.toUpperCase()) {
       case 'OCCUPIED':
+      case 'ENGAGED':
         return 'Occupied';
       case 'RESERVED':
         return 'Reserved';
@@ -79,10 +78,6 @@ class _ParkingScreenState extends State<ParkingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredSlots = selectedFilter == 'All'
-        ? slots
-        : slots.where((slot) => slot['status'] == selectedFilter).toList();
-
     final total = slots.length;
     final occupied = slots.where((slot) => slot['status'] == 'Occupied').length;
     final available = slots.where((slot) => slot['status'] == 'Available').length;
@@ -93,20 +88,49 @@ class _ParkingScreenState extends State<ParkingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Parking overview',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'Monitor and manage parking slots across the facility.',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          Row(
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Parking overview',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Real-time facility map and slot availability.',
+                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                onPressed: _loadSlots,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Refresh'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 25),
+
+          // ── Stat Cards ───────────────────────────────────────
           LayoutBuilder(
             builder: (context, constraints) {
               final cardWidth = constraints.maxWidth >= 900
@@ -128,7 +152,10 @@ class _ParkingScreenState extends State<ParkingScreen> {
             },
           ),
           const SizedBox(height: 25),
+
+          // ── Floor Plan State Image Container ─────────────────
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -138,72 +165,93 @@ class _ParkingScreenState extends State<ParkingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+                Row(
                   children: [
                     const Text(
-                      'Parking slots',
+                      'Live Parking State',
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                     ),
-                    ...['All', 'Available', 'Occupied', 'Reserved'].map(
-                      (filter) => ChoiceChip(
-                        label: Text(filter),
-                        selected: selectedFilter == filter,
-                        onSelected: (_) => setState(() => selectedFilter = filter),
-                        selectedColor: const Color(0xFFDCFCE7),
-                        labelStyle: TextStyle(
-                          color: selectedFilter == filter
-                              ? const Color(0xFF15803D)
-                              : const Color(0xFF6B7280),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
+                    const Spacer(),
+                    // Legend
+                    _legendItem(const Color(0xFF16A34A), 'Available'),
+                    const SizedBox(width: 14),
+                    _legendItem(const Color(0xFFEF4444), 'Occupied'),
+                    const SizedBox(width: 14),
+                    _legendItem(const Color(0xFFEAB308), 'Reserved'),
                   ],
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
+
                 if (isLoading)
                   const Padding(
-                    padding: EdgeInsets.all(32),
+                    padding: EdgeInsets.all(48),
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (errorMessage != null)
                   Center(
                     child: Column(
                       children: [
-                        Text(errorMessage!),
+                        Text(errorMessage!, style: const TextStyle(color: Color(0xFF6B7280))),
                         const SizedBox(height: 12),
                         ElevatedButton(onPressed: _loadSlots, child: const Text('Retry')),
                       ],
                     ),
                   )
-                else if (filteredSlots.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text('No parking slots found.'),
-                    ),
-                  )
                 else
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 170,
-                      mainAxisExtent: 125,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      color: const Color(0xFFF9FAFB),
+                      constraints: const BoxConstraints(maxHeight: 650),
+                      child: InteractiveViewer(
+                        minScale: 0.5,
+                        maxScale: 3.5,
+                        child: Center(
+                          child: Image.asset(
+                            'parking_state.jpeg',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 380,
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.broken_image_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                                  const SizedBox(height: 10),
+                                  Text('parking_state.jpeg could not be loaded', style: TextStyle(color: Colors.grey.shade600)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    itemCount: filteredSlots.length,
-                    itemBuilder: (context, index) => _slotCard(filteredSlots[index]),
                   ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Tip: Scroll or pinch to zoom in/out on the facility state diagram.',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _legendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280), fontWeight: FontWeight.w500)),
+      ],
     );
   }
 
@@ -225,91 +273,6 @@ class _ParkingScreenState extends State<ParkingScreen> {
               Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
               Text(title, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _slotCard(Map<String, dynamic> slot) {
-    Color background;
-    Color iconColor;
-
-    switch (slot['status']) {
-      case 'Occupied':
-        background = const Color(0xFFFFF7ED);
-        iconColor = const Color(0xFFF97316);
-        break;
-      case 'Reserved':
-        background = const Color(0xFFF5F3FF);
-        iconColor = const Color(0xFF7C3AED);
-        break;
-      case 'Maintenance':
-        background = const Color(0xFFF3F4F6);
-        iconColor = const Color(0xFF6B7280);
-        break;
-      default:
-        background = const Color(0xFFF0FDF4);
-        iconColor = const Color(0xFF16A34A);
-    }
-
-    return InkWell(
-      onTap: () => _showSlotDetails(slot),
-      borderRadius: BorderRadius.circular(11),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(color: iconColor.withValues(alpha: 0.15)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.local_parking_rounded, color: iconColor, size: 20),
-                const Spacer(),
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(color: iconColor, shape: BoxShape.circle),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              slot['id'].toString(),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-            ),
-            const SizedBox(height: 3),
-            Text(slot['status'].toString(), style: TextStyle(color: iconColor, fontSize: 10, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showSlotDetails(Map<String, dynamic> slot) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Slot ${slot['id']}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Status: ${slot['status']}'),
-            if (slot['vehicle'].toString().isNotEmpty)
-              Text('Vehicle: ${slot['vehicle']}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
           ),
         ],
       ),

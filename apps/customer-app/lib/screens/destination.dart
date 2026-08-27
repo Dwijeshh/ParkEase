@@ -41,6 +41,9 @@ class _DestinationScreenState extends State<DestinationScreen> {
         return;
       }
 
+      final rawNodeId = slotData['parkingNodeId'] ?? slotData['parking_node_id'];
+      final parkingNodeId = rawNodeId != null ? int.tryParse(rawNodeId.toString()) ?? 0 : 0;
+
       final assignment = ParkingAssignment(
         store:          dest.store,
         entrance:       dest.entrance,
@@ -48,6 +51,7 @@ class _DestinationScreenState extends State<DestinationScreen> {
         icon:           dest.icon,
         mallEntranceId: dest.mallEntranceId,
         slotId:         slotData['slotId']?.toString() ?? slotData['slot_id']?.toString() ?? '',
+        parkingNodeId:  parkingNodeId,
       );
 
       Navigator.of(context).push(slideRoute(SlotScreen(assignment: assignment)));

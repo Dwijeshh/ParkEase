@@ -195,7 +195,10 @@ export async function getNearestSlot(req: Request, res: Response) {
        FROM parking_mall_distance pmd
        JOIN map_nodes mn ON pmd.parking_node_id = mn.node_id
        LEFT JOIN parking_routes pr ON pmd.parking_node_id = pr.parking_node_id
-       LEFT JOIN parking_slots ps ON ps.slot_type = $2 AND ps.status = 'VACANT'
+       JOIN parking_slots ps
+         ON ps.node_id = pmd.parking_node_id
+        AND ps.slot_type = $2
+        AND ps.status = 'VACANT'
        WHERE pmd.mall_entrance_id = $1
        ORDER BY pmd.distance ASC
        LIMIT 1`,

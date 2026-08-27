@@ -86,10 +86,23 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).push(slideRoute(const QrScanScreen()));
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.message);
+      // Map backend error codes to friendly messages
+      String msg = e.message;
+      if (msg.contains('INVALID_CREDENTIALS') || msg.contains('Invalid email or password')) {
+        msg = _isNewUser
+            ? 'Registration succeeded but login failed. Please try logging in.'
+            : 'Incorrect password. Please try again.';
+      } else if (msg.contains('EMAIL_ALREADY_EXISTS')) {
+        msg = 'An account with this email already exists. Please log in instead.';
+      } else if (msg.contains('USER_NOT_FOUND') || msg.contains('No account')) {
+        msg = 'No account found with this email. Please register first.';
+      } else if (msg.contains('SocketException') || msg.contains('Connection refused')) {
+        msg = 'Cannot connect to server. Make sure the backend is running.';
+      }
+      setState(() => _error = msg);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = 'Cannot connect to server. Check your connection.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

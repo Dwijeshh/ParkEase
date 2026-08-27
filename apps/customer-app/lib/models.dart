@@ -9,6 +9,8 @@ class ParkingAssignment {
   final int mallEntranceId;
   /// The parking slot DB id used to start a session
   final String slotId;
+  /// The map node ID of the parking slot — used to fetch the driving route
+  final int parkingNodeId;
 
   const ParkingAssignment({
     required this.store,
@@ -17,6 +19,7 @@ class ParkingAssignment {
     required this.icon,
     this.mallEntranceId = 1,
     this.slotId = '',
+    this.parkingNodeId = 0,
   });
 }
 
