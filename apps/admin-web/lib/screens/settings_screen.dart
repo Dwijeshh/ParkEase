@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/report_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,6 +13,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool notifications = true;
   bool autoAllocation = true;
   bool alertSystem = true;
+
+  String _adminEmail = '';
+  String _adminName = '';
+  bool _isLoadingProfile = true;
+  String _totalSlots = '-';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    const storage = FlutterSecureStorage();
+    final email = await storage.read(key: 'admin_email') ?? '';
+
+    dynamic occupancyData;
+    try {
+      occupancyData = await ReportService().getOccupancyReport();
+    } catch (_) {
+      occupancyData = null;
+    }
+
+    setState(() {
+      _adminEmail = email;
+      // Derive display name: capitalize part before @
+      final local = email.split('@').first;
+      _adminName = local.isNotEmpty
+          ? local[0].toUpperCase() + local.substring(1)
+          : 'Admin';
+      _isLoadingProfile = false;
+      _totalSlots =
+          '${occupancyData?['data']?['total_slots'] ?? 240} slots';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Facility information',
             children: [
               _infoRow('Facility name', 'ParkEase Parking Facility'),
-              _infoRow('Total capacity', '240 slots'),
+              _infoRow('Total capacity', _totalSlots),
               _infoRow('Available gates', '3'),
               _infoRow('System status', 'Operational'),
             ],
@@ -101,9 +138,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _section(
             title: 'Administrator',
             children: [
-              _infoRow('Name', 'Admin'),
-              _infoRow('Role', 'System Administrator'),
-              _infoRow('Email', 'admin@parkease.com'),
+              _isLoadingProfile
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        _infoRow('Name', _adminName),
+                        _infoRow('Role', 'System Administrator'),
+                        _infoRow(
+                          'Email',
+                          _adminEmail.isEmpty ? '-' : _adminEmail,
+                        ),
+                      ],
+                    ),
             ],
           ),
         ],
