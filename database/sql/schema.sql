@@ -1155,3 +1155,12 @@ ON parking_sessions(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_sessions_vehicle_id
 ON parking_sessions(vehicle_id);
+
+-- =========================================================
+-- 14. SYNC IDENTITY SEQUENCES
+-- =========================================================
+SELECT setval(pg_get_serial_sequence('users', 'user_id'), COALESCE((SELECT MAX(user_id) FROM users), 1));
+SELECT setval(pg_get_serial_sequence('vehicles', 'vehicle_id'), COALESCE((SELECT MAX(vehicle_id) FROM vehicles), 1));
+SELECT setval(pg_get_serial_sequence('admins', 'admin_id'), COALESCE((SELECT MAX(admin_id) FROM admins), 1));
+SELECT setval(pg_get_serial_sequence('parking_slots', 'slot_id'), COALESCE((SELECT MAX(slot_id) FROM parking_slots), 1));
+SELECT setval(pg_get_serial_sequence('parking_allocations', 'allocation_id'), COALESCE((SELECT MAX(allocation_id) FROM parking_allocations), 1));

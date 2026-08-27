@@ -123,11 +123,22 @@ export async function login(req: Request, res: Response) {
       }
     }
 
-    return res.status(401).json({
+    const accountExists = adminResult.rows.length > 0 || userResult.rows.length > 0;
+    if (accountExists) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "INCORRECT_PASSWORD",
+          message: "Incorrect password. Please try again."
+        }
+      });
+    }
+
+    return res.status(404).json({
       success: false,
       error: {
-        code: "INVALID_CREDENTIALS",
-        message: "Invalid email or password"
+        code: "USER_NOT_FOUND",
+        message: "No account found with this email. Please register."
       }
     });
   } catch (error) {
@@ -157,6 +168,8 @@ export async function register(req: Request, res: Response) {
   }
 
   const { name, email, phone, password } = parsed.data;
+  const licensePlate = (req.body.licensePlate || req.body.license_plate || "").toString().trim().toUpperCase();
+  const vehicleType = (req.body.vehicleType || req.body.vehicle_type || "Car").toString();
   const emailLower = email.toLowerCase().trim();
 
   try {
@@ -186,6 +199,24 @@ export async function register(req: Request, res: Response) {
     );
 
     const newUser = result.rows[0];
+
+    // Auto-create a default Car vehicle for the new user
+    const regNumber = licensePlate || (`MH12CAR${newUser.user_id}`);
+    let vehicleInfo: Record<string, string | null> = { registration_number: regNumber, vehicle_type: vehicleType };
+    try {
+      const vehicleResult = await query(
+        `INSERT INTO vehicles (registration_number, vehicle_type)
+         VALUES ($1, $2)
+         RETURNING vehicle_id, registration_number, vehicle_type`,
+        [regNumber, vehicleType]
+      );
+      if (vehicleResult.rows.length > 0) {
+        vehicleInfo = vehicleResult.rows[0];
+      }
+    } catch (vehicleErr) {
+      console.warn("Vehicle creation during register failed:", vehicleErr);
+    }
+
     const token = createToken(newUser.user_id.toString(), "USER", newUser.name, newUser.email);
 
     const userInfo = {
@@ -194,7 +225,8 @@ export async function register(req: Request, res: Response) {
       email: newUser.email,
       phone: newUser.phone,
       parking_status: newUser.parking_status,
-      role: "USER"
+      role: "USER",
+      vehicle: vehicleInfo
     };
 
     return res.status(201).json({

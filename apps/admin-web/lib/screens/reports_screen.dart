@@ -1,10 +1,66 @@
 import 'package:flutter/material.dart';
 
-class ReportsScreen extends StatelessWidget {
+import '../services/report_service.dart';
+
+class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
   @override
+  State<ReportsScreen> createState() => _ReportsScreenState();
+}
+
+class _ReportsScreenState extends State<ReportsScreen> {
+  final ReportService _reportService = ReportService();
+
+  bool _isLoading = true;
+  String? _error;
+  Map<String, dynamic> _summary = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReport();
+  }
+
+  Future<void> _loadReport() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final response = await _reportService.getSummary();
+      Map<String, dynamic> data = {};
+      if (response is Map<String, dynamic>) {
+        data = response['data'] is Map
+            ? Map<String, dynamic>.from(response['data'])
+            : Map<String, dynamic>.from(response);
+      }
+      if (!mounted) return;
+      setState(() {
+        _summary = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final totalVeh = _summary['totalVehicles']?.toString() ?? '-';
+    final occupancyRaw = _summary['occupancy'];
+    final occupancy = occupancyRaw != null
+        ? '${double.tryParse(occupancyRaw.toString())?.toStringAsFixed(1) ?? occupancyRaw}%'
+        : '-';
+    final revenueRaw = _summary['revenue'];
+    final revenue = revenueRaw != null
+        ? '₹${double.tryParse(revenueRaw.toString())?.toStringAsFixed(0) ?? revenueRaw}'
+        : '-';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
       child: Column(
@@ -31,57 +87,62 @@ class ReportsScreen extends StatelessWidget {
 
           const SizedBox(height: 25),
 
-          Row(
-            children: [
-              _reportCard(
-                '1,284',
-                'Vehicles today',
-                Icons.directions_car_outlined,
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
               ),
-              const SizedBox(width: 15),
-              _reportCard(
-                '70%',
-                'Average occupancy',
-                Icons.pie_chart_outline,
+            )
+          else if (_error != null)
+            Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Color(0xFF9CA3AF), size: 40),
+                  const SizedBox(height: 10),
+                  Text('Could not load report data', style: const TextStyle(color: Color(0xFF6B7280))),
+                  const SizedBox(height: 12),
+                  ElevatedButton(onPressed: _loadReport, child: const Text('Retry')),
+                ],
               ),
-              const SizedBox(width: 15),
-              _reportCard(
-                '₹18,450',
-                'Revenue today',
-                Icons.currency_rupee,
-              ),
-            ],
-          ),
+            )
+          else ...[
+            Row(
+              children: [
+                _reportCard(totalVeh, 'Vehicles registered', Icons.directions_car_outlined),
+                const SizedBox(width: 15),
+                _reportCard(occupancy, 'Current occupancy', Icons.pie_chart_outline),
+                const SizedBox(width: 15),
+                _reportCard(revenue, 'Total revenue', Icons.currency_rupee),
+              ],
+            ),
 
-          const SizedBox(height: 25),
+            const SizedBox(height: 25),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: _activityChart(),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _quickReports(),
-              ),
-            ],
-          ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _slotBreakdown(),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _quickReports(),
+                ),
+              ],
+            ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          _downloadSection(),
+            _downloadSection(),
+          ],
         ],
       ),
     );
   }
 
-  Widget _reportCard(
-    String value,
-    String title,
-    IconData icon,
-  ) {
+  Widget _reportCard(String value, String title, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -101,32 +162,14 @@ class ReportsScreen extends StatelessWidget {
                 color: const Color(0xFFF0FDF4),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF16A34A),
-                size: 21,
-              ),
+              child: Icon(icon, color: const Color(0xFF16A34A), size: 21),
             ),
-
             const SizedBox(width: 13),
-
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 11,
-                  ),
-                ),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
+                Text(title, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11)),
               ],
             ),
           ],
@@ -135,17 +178,16 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _activityChart() {
-    final values = [0.35, 0.55, 0.70, 0.62, 0.82, 0.76, 0.68];
+  Widget _slotBreakdown() {
+    final total    = _toInt(_summary['totalSlots']);
+    final occupied = _toInt(_summary['occupiedSlots']);
+    final avail    = _toInt(_summary['availableSlots']);
+    final reserved = _toInt(_summary['reservedSlots']);
 
-    final days = [
-      'Mon',
-      'Tue',
-      'Wed',
-      'Thu',
-      'Fri',
-      'Sat',
-      'Sun',
+    final items = [
+      _BreakdownItem('Occupied',  occupied,  const Color(0xFFF97316), const Color(0xFFFFF7ED)),
+      _BreakdownItem('Available', avail,     const Color(0xFF16A34A), const Color(0xFFF0FDF4)),
+      _BreakdownItem('Reserved',  reserved,  const Color(0xFF7C3AED), const Color(0xFFF5F3FF)),
     ];
 
     return Container(
@@ -154,89 +196,54 @@ class ReportsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Parking activity',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-
+          const Text('Slot breakdown', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-
-          const Text(
-            'Occupancy over the past week',
-            style: TextStyle(
-              color: Color(0xFF9CA3AF),
-              fontSize: 12,
-            ),
-          ),
-
+          Text('Total capacity: $total slots', style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12)),
           const SizedBox(height: 25),
-
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(
-                values.length,
-                (index) {
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${(values[index] * 100).round()}%',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.bottomCenter,
-                              child: FractionallySizedBox(
-                                heightFactor: values[index],
-                                widthFactor: 0.7,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF22C55E),
-                                    borderRadius:
-                                        BorderRadius.circular(5),
-                                  ),
+              children: items.map((item) {
+                final fraction = total > 0 ? item.count / total : 0.0;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${(fraction * 100).toStringAsFixed(1)}%',
+                          style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                        ),
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: FractionallySizedBox(
+                              heightFactor: fraction.clamp(0.02, 1.0),
+                              widthFactor: 0.7,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: item.color,
+                                  borderRadius: BorderRadius.circular(5),
                                 ),
                               ),
                             ),
                           ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            days[index],
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(item.label, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+                        Text(item.count.toString(), style: TextStyle(fontSize: 11, color: item.color, fontWeight: FontWeight.w700)),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -296,11 +303,7 @@ class ReportsScreen extends StatelessWidget {
     );
   }
 
-  Widget _reportOption(
-    String title,
-    String subtitle,
-    IconData icon,
-  ) {
+  Widget _reportOption(String title, String subtitle, IconData icon) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
       child: Row(
@@ -312,11 +315,7 @@ class ReportsScreen extends StatelessWidget {
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: const Color(0xFF4B5563),
-            ),
+            child: Icon(icon, size: 18, color: const Color(0xFF4B5563)),
           ),
 
           const SizedBox(width: 10),
@@ -325,29 +324,13 @@ class ReportsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF9CA3AF),
-                  ),
-                ),
+                Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(subtitle, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
               ],
             ),
           ),
 
-          const Icon(
-            Icons.chevron_right,
-            size: 18,
-            color: Color(0xFF9CA3AF),
-          ),
+          const Icon(Icons.chevron_right, size: 18, color: Color(0xFF9CA3AF)),
         ],
       ),
     );
@@ -378,18 +361,12 @@ class ReportsScreen extends StatelessWidget {
               children: [
                 Text(
                   'Generate a detailed report',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 SizedBox(height: 3),
                 Text(
                   'Export parking data for a selected date range.',
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
                 ),
               ],
             ),
@@ -403,4 +380,18 @@ class ReportsScreen extends StatelessWidget {
       ),
     );
   }
+
+  int _toInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is int) return v;
+    return int.tryParse(v.toString()) ?? 0;
+  }
+}
+
+class _BreakdownItem {
+  final String label;
+  final int count;
+  final Color color;
+  final Color background;
+  const _BreakdownItem(this.label, this.count, this.color, this.background);
 }
