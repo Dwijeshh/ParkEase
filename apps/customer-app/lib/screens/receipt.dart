@@ -50,18 +50,18 @@ class ReceiptScreen extends StatelessWidget {
               const SizedBox(height: 20),
               const Text(
                 'Payment Successful',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF0D2A4A)),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 4),
-              Text('Thank you for parking with ParkEase', style: TextStyle(color: Colors.grey.shade600)),
+              const Text('Thank you for parking with ParkEase', style: TextStyle(color: AppColors.textMuted)),
               const SizedBox(height: 32),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   children: [
@@ -108,12 +108,12 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade600)),
+          Text(label, style: const TextStyle(color: AppColors.textMuted)),
           Text(
             value,
             style: TextStyle(
               fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-              color: bold ? AppColors.primary : Colors.black87,
+              color: bold ? AppColors.primary : AppColors.textPrimary,
               fontSize: bold ? 17 : 14,
             ),
           ),

@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 28),
               Text(
                 'Phone number',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMuted),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Vehicle number plate',
-                  style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               Text(
                 'Password',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMuted),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 4),
               Text(
                 'Demo password is pass123',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
@@ -172,16 +172,16 @@ class _ModeButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? AppColors.primary : Colors.grey.shade300),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : Colors.grey.shade700,
+            color: selected ? Colors.white : AppColors.textMuted,
           ),
         ),
       ),

@@ -26,14 +26,14 @@ class BrandHeader extends StatelessWidget {
             const SizedBox(width: 10),
             const Text(
               'ParkEase',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.accent),
             ),
           ],
         ),
         const SizedBox(height: 28),
         Text(
           title,
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: Color(0xFF0D2A4A)),
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 6),

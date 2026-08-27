@@ -1,5 +1,41 @@
 import 'package:flutter/material.dart';
 
+/// QR payload format from the backend: a Python-tuple-style string
+/// `(id, mallName, city, capacity, ratePerHour)`, e.g.
+/// `(1, 'Mall1', 'Udipi', 85, 30.00)`.
+final _lotInfoPattern =
+    RegExp(r"""^\(\s*(\d+)\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$""");
+
+class LotInfo {
+  final int id;
+  final String mallName;
+  final String city;
+  final int capacity;
+  final double ratePerHour;
+
+  const LotInfo({
+    required this.id,
+    required this.mallName,
+    required this.city,
+    required this.capacity,
+    required this.ratePerHour,
+  });
+
+  factory LotInfo.parse(String raw) {
+    final match = _lotInfoPattern.firstMatch(raw.trim());
+    if (match == null) {
+      throw FormatException('Unrecognized lot QR payload: $raw');
+    }
+    return LotInfo(
+      id: int.parse(match.group(1)!),
+      mallName: match.group(2)!,
+      city: match.group(3)!,
+      capacity: int.parse(match.group(4)!),
+      ratePerHour: double.parse(match.group(5)!),
+    );
+  }
+}
+
 class ParkingAssignment {
   final String store;
   final String entrance;

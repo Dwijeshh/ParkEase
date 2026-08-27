@@ -24,15 +24,17 @@ class ParkHereDialog extends StatelessWidget {
   const ParkHereDialog({super.key, this.slotId});
   final String? slotId;
 
-  static const _primary = Color(0xFF2F6FED);
-  static const _primarySoft = Color(0xFFEAF1FE);
-  static const _textSecondary = Color(0xFF6B7280);
-  static const _border = Color(0xFFE3E5E9);
+  static const _primary = Color(0xFF5B8DEF);
+  static const _primarySoft = Color(0xFF1F2A45);
+  static const _textPrimary = Color(0xFFF3F4F6);
+  static const _textSecondary = Color(0xFF9AA3AF);
+  static const _border = Color(0xFF2A2F38);
+  static const _surface = Color(0xFF171B22);
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: _surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -56,13 +58,13 @@ class ParkHereDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Park your vehicle here?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              'Is this you?',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _textPrimary),
             ),
             if (slotId != null) ...[
               const SizedBox(height: 6),
               Text(
-                'Slot $slotId will be reserved for you.',
+                'We spotted a car at Slot $slotId. Confirm it\'s yours.',
                 style: const TextStyle(fontSize: 14, color: _textSecondary),
               ),
             ],

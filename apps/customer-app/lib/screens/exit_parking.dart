@@ -70,16 +70,16 @@ class ExitParkingScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 27,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0D2A4A),
+                  color: AppColors.textPrimary,
                 ),
               ),
 
               const SizedBox(height: 8),
 
-              Text(
+              const Text(
                 'How would you like to reach the parking exit?',
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: AppColors.textMuted,
                   fontSize: 15,
                 ),
               ),
@@ -101,23 +101,13 @@ class ExitParkingScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
 
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
 
                     borderRadius: BorderRadius.circular(20),
 
                     border: Border.all(
-                      color: Colors.grey.shade200,
+                      color: AppColors.border,
                     ),
-
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: 0.04,
-                        ),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
                   ),
 
                   child: Row(
@@ -157,7 +147,7 @@ class ExitParkingScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0D2A4A),
+                                color: AppColors.textPrimary,
                               ),
                             ),
 
@@ -166,7 +156,7 @@ class ExitParkingScreen extends StatelessWidget {
                             Text(
                               'Show me the route from my parking slot to the exit.',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: AppColors.textMuted,
                                 fontSize: 13,
                               ),
                             ),
@@ -174,9 +164,9 @@ class ExitParkingScreen extends StatelessWidget {
                         ),
                       ),
 
-                      Icon(
+                      const Icon(
                         Icons.chevron_right_rounded,
-                        color: Colors.grey.shade400,
+                        color: AppColors.textMuted,
                         size: 28,
                       ),
                     ],
@@ -292,16 +282,16 @@ class ExitParkingScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
 
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: AppColors.surface,
 
                   borderRadius: BorderRadius.circular(14),
                 ),
 
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.receipt_long_outlined,
-                      color: Colors.grey.shade600,
+                      color: AppColors.textMuted,
                     ),
 
                     const SizedBox(width: 12),
@@ -312,10 +302,10 @@ class ExitParkingScreen extends StatelessWidget {
                             CrossAxisAlignment.start,
 
                         children: [
-                          Text(
+                          const Text(
                             'Current parking fee',
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: AppColors.textMuted,
                               fontSize: 13,
                             ),
                           ),
@@ -327,7 +317,7 @@ class ExitParkingScreen extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0D2A4A),
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ],

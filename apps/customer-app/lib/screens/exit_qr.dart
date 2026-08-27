@@ -54,10 +54,10 @@ class _ExitQrScreenState extends State<ExitQrScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1220),
+      backgroundColor: AppColors.background,
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B1220),
+        backgroundColor: AppColors.background,
         foregroundColor: Colors.white,
         title: const Text('Scan Exit QR'),
       ),

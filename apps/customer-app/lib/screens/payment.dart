@@ -52,14 +52,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Total Amount', style: TextStyle(color: Colors.grey.shade600)),
+              const Text('Total Amount', style: TextStyle(color: AppColors.textMuted)),
               const SizedBox(height: 6),
               Text(
                 '₹${widget.amount.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 38, fontWeight: FontWeight.w800, color: Color(0xFF0D2A4A)),
+                style: const TextStyle(fontSize: 38, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 32),
-              Text('Choose payment method', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+              const Text('Choose payment method', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMuted)),
               const SizedBox(height: 12),
               _MethodTile(
                 icon: Icons.payments_outlined,
@@ -119,19 +119,19 @@ class _MethodTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withValues(alpha: 0.08) : Colors.white,
+          color: selected ? AppColors.primary.withValues(alpha: 0.16) : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? AppColors.primary : Colors.grey.shade200, width: selected ? 1.6 : 1),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 1.6 : 1),
         ),
         child: Row(
           children: [
-            Icon(icon, color: selected ? AppColors.primary : Colors.grey.shade600),
+            Icon(icon, color: selected ? AppColors.primary : AppColors.textMuted),
             const SizedBox(width: 14),
-            Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: selected ? AppColors.primary : Colors.black87)),
+            Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: selected ? AppColors.primary : AppColors.textPrimary)),
             const Spacer(),
             Icon(
               selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-              color: selected ? AppColors.primary : Colors.grey.shade400,
+              color: selected ? AppColors.primary : AppColors.textMuted,
             ),
           ],
         ),
