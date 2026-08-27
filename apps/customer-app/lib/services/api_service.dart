@@ -109,6 +109,18 @@ class CustomerApiService {
     return null;
   }
 
+  /// Gets the driving route from a parking slot to the exit.
+  static Future<Map<String, dynamic>?> getExitRoute(int parkingNodeId) async {
+    final headers = await _authHeaders();
+    final uri = Uri.parse('$baseUrl/map/routes/exit/$parkingNodeId');
+    final response = await http.get(uri, headers: headers);
+    if (response.statusCode == 200) {
+      final body = _decode(response);
+      return body['data'] is Map ? Map<String, dynamic>.from(body['data']) : null;
+    }
+    return null;
+  }
+
   // ── Sessions ─────────────────────────────────────────────────
 
   /// Starts a parking session. Returns the session data.
