@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,18 +18,16 @@ enum VehicleType {
   BIKE
 }
 
-enum SlotStatus {
-  AVAILABLE
-  RESERVED
-  OCCUPIED
+enum ParkingSlotStatus {
+  VACANT
+  ENGAGED
+  WAITING
   MAINTENANCE
 }
 
-enum ReservationStatus {
+enum AllocationStatus {
   ACTIVE
-  CANCELLED
-  COMPLETED
-  EXPIRED
+  RELEASED
 }
 
 enum SessionStatus {
@@ -42,141 +35,165 @@ enum SessionStatus {
   COMPLETED
 }
 
-enum AlertType {
-  RESERVED_SLOT_CONFLICT
-  WRONG_VEHICLE_TYPE
-  UNKNOWN_OCCUPANCY
-  NO_COMPATIBLE_SLOT
+enum MapNodeType {
+  ENTRY
+  EXIT
+  JUNCTION
+  PARKING
+  MALL_ENTRY
 }
 
-enum AlertSeverity {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum AlertStatus {
-  NEW
-  ACKNOWLEDGED
-  RESOLVED
-  DISMISSED
+enum MapDirectionType {
+  ONE_WAY
+  TWO_WAY
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   name      String
   email     String   @unique
+  phone     String?
   password  String
   role      UserRole @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  vehicles     Vehicle[]
-  reservations Reservation[]
-  alerts       ParkingAlert[] @relation("AlertUser")
+  vehicles    Vehicle[]
+  allocations ParkingAllocation[]
+  sessions    ParkingSession[]
+}
+
+model Admin {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 }
 
 model Vehicle {
-  id                 String      @id @default(cuid())
+  id                 BigInt      @id @default(autoincrement())
   registrationNumber String      @unique
   type               VehicleType
-  userId             String
+  userId             BigInt
   createdAt          DateTime    @default(now())
 
-  user         User             @relation(fields: [userId], references: [id])
-  reservations Reservation[]
-  sessions     ParkingSession[]
-  alerts       ParkingAlert[]   @relation("AlertVehicle")
+  user        User                @relation(fields: [userId], references: [id])
+  allocations ParkingAllocation[]
+  sessions    ParkingSession[]
 }
 
-model Facility {
-  id        String   @id @default(cuid())
-  name      String
-  address   String?
-  createdAt DateTime @default(now())
+model ParkingLot {
+  id         BigInt   @id @default(autoincrement())
+  name       String
+  location   String
+  totalSlots Int
+  baseFee    Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
 
   slots ParkingSlot[]
 }
 
 model ParkingSlot {
-  id          String      @id @default(cuid())
-  code        String
-  vehicleType VehicleType
-  status      SlotStatus  @default(AVAILABLE)
-  facilityId  String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         BigInt            @id @default(autoincrement())
+  lotId      BigInt
+  slotNumber String
+  slotType   VehicleType
+  status     ParkingSlotStatus @default(VACANT)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
 
-  facility     Facility         @relation(fields: [facilityId], references: [id])
-  reservations Reservation[]
-  sessions     ParkingSession[]
-  alerts       ParkingAlert[]   @relation("AlertSlot")
+  lot         ParkingLot          @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  allocations ParkingAllocation[]
+  sessions    ParkingSession[]
 
-  @@unique([facilityId, code])
+  @@unique([lotId, slotNumber])
 }
 
-model Reservation {
-  id        String            @id @default(cuid())
-  userId    String
-  vehicleId String
-  slotId    String
-  status    ReservationStatus @default(ACTIVE)
-  startsAt  DateTime          @default(now())
-  expiresAt DateTime?
-  createdAt DateTime          @default(now())
+model ParkingAllocation {
+  id          BigInt           @id @default(autoincrement())
+  userId      BigInt
+  vehicleId   BigInt
+  slotId      BigInt
+  allocatedAt DateTime         @default(now())
+  releasedAt  DateTime?
+  status      AllocationStatus @default(ACTIVE)
 
   user    User            @relation(fields: [userId], references: [id])
   vehicle Vehicle         @relation(fields: [vehicleId], references: [id])
   slot    ParkingSlot     @relation(fields: [slotId], references: [id])
   session ParkingSession?
-  alerts  ParkingAlert[]  @relation("AlertReservation")
+
+  @@index([userId])
+  @@index([vehicleId])
+  @@index([slotId])
 }
 
 model ParkingSession {
-  id            String        @id @default(cuid())
-  vehicleId     String
-  slotId        String
-  reservationId String        @unique
-  status        SessionStatus @default(ACTIVE)
-  startedAt     DateTime      @default(now())
-  endedAt       DateTime?
+  id           BigInt        @id @default(autoincrement())
+  userId       BigInt
+  vehicleId    BigInt
+  slotId       BigInt
+  allocationId BigInt        @unique
+  entryTime    DateTime
+  exitTime     DateTime?
+  amount       Decimal       @default(0) @db.Decimal(10, 2)
+  status       SessionStatus @default(ACTIVE)
 
-  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
-  slot        ParkingSlot @relation(fields: [slotId], references: [id])
-  reservation Reservation @relation(fields: [reservationId], references: [id])
+  user       User              @relation(fields: [userId], references: [id])
+  vehicle    Vehicle           @relation(fields: [vehicleId], references: [id])
+  slot       ParkingSlot       @relation(fields: [slotId], references: [id])
+  allocation ParkingAllocation @relation(fields: [allocationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([vehicleId])
+  @@index([slotId])
 }
 
-model ParkingAlert {
-  id       String        @id @default(cuid())
-  type     AlertType
-  severity AlertSeverity
-  status   AlertStatus   @default(NEW)
-  message  String
+model MapNode {
+  id          Int         @id @default(autoincrement())
+  nodeType    MapNodeType
+  xCoordinate Float
+  yCoordinate Float
 
-  expectedVehicleType VehicleType?
-  detectedVehicleType VehicleType?
+  outgoingEdges MapEdge[]      @relation("MapEdgeFrom")
+  incomingEdges MapEdge[]      @relation("MapEdgeTo")
+  parkingRoutes ParkingRoute[] @relation("ParkingRouteNode")
+  sourceRoutes  ParkingRoute[] @relation("ParkingRouteSource")
+  exitRoutes    MapExitRoute[] @relation("ExitRouteNode")
+  destinations  MapExitRoute[] @relation("ExitRouteDestination")
+}
 
-  userId        String?
-  vehicleId     String?
-  slotId        String?
-  reservationId String?
+model MapEdge {
+  id            Int              @id @default(autoincrement())
+  fromNodeId    Int
+  toNodeId      Int
+  distance      Float
+  directionType MapDirectionType @default(ONE_WAY)
 
-  acknowledgedBy String?
-  acknowledgedAt DateTime?
-  resolvedBy     String?
-  resolvedAt     DateTime?
-  resolutionNote String?
+  fromNode MapNode @relation("MapEdgeFrom", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode   MapNode @relation("MapEdgeTo", fields: [toNodeId], references: [id], onDelete: Cascade)
 
-  evidenceImageUrl String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  @@index([fromNodeId])
+  @@index([toNodeId])
+}
 
-  user        User?        @relation("AlertUser", fields: [userId], references: [id])
-  vehicle     Vehicle?     @relation("AlertVehicle", fields: [vehicleId], references: [id])
-  slot        ParkingSlot? @relation("AlertSlot", fields: [slotId], references: [id])
-  reservation Reservation? @relation("AlertReservation", fields: [reservationId], references: [id])
+model ParkingRoute {
+  parkingNodeId Int   @id
+  sourceNodeId  Int
+  totalDistance Float
+  routeNodes    Int[]
 
-  @@index([status])
-  @@index([severity])
-  @@index([createdAt])
+  parkingNode MapNode @relation("ParkingRouteNode", fields: [parkingNodeId], references: [id], onDelete: Cascade)
+  sourceNode  MapNode @relation("ParkingRouteSource", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+}
+
+model MapExitRoute {
+  parkingNodeId     Int   @id
+  destinationNodeId Int
+  totalDistance     Float
+  routeNodes        Int[]
+
+  parkingNode     MapNode @relation("ExitRouteNode", fields: [parkingNodeId], references: [id], onDelete: Cascade)
+  destinationNode MapNode @relation("ExitRouteDestination", fields: [destinationNodeId], references: [id], onDelete: Cascade)
 }
