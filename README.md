@@ -611,6 +611,10 @@ ParkEase is currently being developed as an academic working prototype using a d
 
 ## License
 
-This project is currently developed as an academic prototype.
+Copyright (c) 2026 ParkEase authors. All rights reserved. The original
+ParkEase materials are proprietary; no permission to use, copy, modify, or
+distribute them is granted without prior written permission. See
+[LICENSE](LICENSE) for details. Third-party components retain their own
+licenses.
 
 

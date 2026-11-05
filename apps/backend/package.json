@@ -11,7 +11,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "UNLICENSED",
+  "private": true,
   "dependencies": {
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
